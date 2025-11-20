@@ -55,13 +55,6 @@ foreach ($branches as $b) {
     </div>
     <!-- Table Container -->
     <div class="advanced-table-container">
-        <!-- Table Controls -->
-        <div class="table-controls">
-            <div class="table-header">
-                <!-- Column-wise search only: removed global search input -->
-                <!-- action buttons moved to breadcrumb area for better alignment -->
-            </div>
-        </div>
         <!-- Table -->
         <div class="table-responsive position-relative" id="tableContainer">
             <table class="table data-table" id="students-table">
