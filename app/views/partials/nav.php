@@ -31,7 +31,16 @@
                 <!-- <li class="nav-item"><a class="nav-link" href="index.php?page=courses"><i class="fas fa-book me-1"></i> Courses</a></li> -->
                 <li class="nav-item"><a class="nav-link" href="index.php?page=subjects"><i class="fas fa-book-open me-1"></i> Subjects</a></li>
                 <li class="nav-item"><a class="nav-link" href="index.php?page=batches"><i class="fas fa-layer-group me-1"></i> Batches</a></li>
-                <li class="nav-item"><a class="nav-link" href="index.php?page=attendance"><i class="fas fa-calendar-check me-1"></i> Attendance</a></li>
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle" href="#" id="attendanceMenu" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="fas fa-calendar-check me-1"></i> Attendance
+                    </a>
+                    <ul class="dropdown-menu" aria-labelledby="attendanceMenu">
+                        <li><a class="dropdown-item" href="index.php?page=attendance_students">Student Attendance</a></li>
+                        <li><a class="dropdown-item" href="index.php?page=attendance_faculty">Faculty Attendance</a></li>
+                        <li><a class="dropdown-item" href="index.php?page=attendance_employee">Employee Attendance</a></li>
+                    </ul>
+                </li>
                 <li class="nav-item"><a class="nav-link" href="index.php?page=fees"><i class="fas fa-money-bill-wave me-1"></i> Fees</a></li>
                 <!-- <li class="nav-item"><a class="nav-link" href="index.php?page=salaries"><i class="fas fa-money-check me-1"></i> Salaries</a></li> -->
                 <li class="nav-item"><a class="nav-link" href="index.php?page=leaves"><i class="fas fa-umbrella-beach me-1"></i> Leaves</a></li>

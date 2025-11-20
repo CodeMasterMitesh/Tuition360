@@ -11,6 +11,7 @@
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="../../../public/assets/js/export-print.js"></script>
+<script src="../../../public/assets/js/crud-helpers.js"></script>
 <script>
     // Add active class to current page in navbar
     document.addEventListener('DOMContentLoaded', function() {

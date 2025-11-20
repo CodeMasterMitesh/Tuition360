@@ -8,11 +8,13 @@ if ($action === 'mark' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     $entity_type = $_POST['entity_type'] ?? '';
     $entity_id = $_POST['entity_id'] ?? null;
     $date = $_POST['date'] ?? date('Y-m-d');
+    $in_time = $_POST['in_time'] ?? null;
+    $out_time = $_POST['out_time'] ?? null;
     $status = $_POST['status'] ?? '';
     $note = $_POST['note'] ?? '';
     $recorded_by = $_POST['recorded_by'] ?? null;
-    $stmt = mysqli_prepare($conn, "INSERT INTO attendance (branch_id, entity_type, entity_id, date, status, note, recorded_by) VALUES (?, ?, ?, ?, ?, ?, ?)");
-    mysqli_stmt_bind_param($stmt, 'isisssi', $branch_id, $entity_type, $entity_id, $date, $status, $note, $recorded_by);
+    $stmt = mysqli_prepare($conn, "INSERT INTO attendance (branch_id, entity_type, entity_id, date, in_time, out_time, status, note, recorded_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
+    mysqli_stmt_bind_param($stmt, 'isisssssi', $branch_id, $entity_type, $entity_id, $date, $in_time, $out_time, $status, $note, $recorded_by);
     $success = mysqli_stmt_execute($stmt);
     echo json_encode(['success' => $success]);
     exit;

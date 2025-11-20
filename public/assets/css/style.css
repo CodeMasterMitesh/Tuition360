@@ -476,10 +476,10 @@
  }
 
  .data-table thead th {
-     background: linear-gradient(135deg, var(--primary-color), #4a00e0);
-     color: white;
-     border: none;
-     padding: 1rem 0.75rem;
+     background:white;
+     color: black;
+     border: 1px solid #dee2e6;
+     padding: 5px;
      font-weight: 600;
      position: sticky;
      top: 0;

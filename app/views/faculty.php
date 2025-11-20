@@ -7,6 +7,7 @@ if (file_exists($controllerFile)) {
     $cls = 'FacultyController';
     if (class_exists($cls) && method_exists($cls, 'getAll')) {
         $faculty = $cls::getAll();
+        // echo '<pre>'.print_r($faculty,true).'</pre>';
     }
 }
 $search = $_GET['search'] ?? '';
@@ -176,6 +177,11 @@ if (file_exists($branchFile)) {
                     <div class="mb-3">
                         <label class="form-label">Phone</label>
                         <input type="tel" class="form-control" name="phone" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Password</label>
+                        <input type="password" class="form-control" name="password" placeholder="Optional: enter a password to set">
+                        <div class="form-text">Leave blank to generate or use default password.</div>
                     </div>
                     <div class="mb-3">
                         <label class="form-label">Branch</label>

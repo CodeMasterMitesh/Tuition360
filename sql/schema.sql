@@ -111,6 +111,8 @@ CREATE TABLE IF NOT EXISTS attendance (
   entity_type ENUM('student','faculty','employee') NOT NULL,
   entity_id INT NOT NULL,
   date DATE NOT NULL,
+  in_time TIME NULL,
+  out_time TIME NULL,
   status ENUM('present','absent','leave') NOT NULL,
   note VARCHAR(255),
   recorded_by INT,

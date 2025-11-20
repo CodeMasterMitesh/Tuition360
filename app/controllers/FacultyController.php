@@ -19,15 +19,39 @@ class FacultyController {
     }
     public static function create($data) {
         global $conn;
-        $hashed = password_hash($data['password'], PASSWORD_DEFAULT);
+        // defensive: ensure expected keys exist
+        $branch_id = intval($data['branch_id'] ?? 0);
+        $name = $data['name'] ?? '';
+        $email = $data['email'] ?? '';
+        $password_raw = $data['password'] ?? 'password';
+        $hashed = password_hash($password_raw, PASSWORD_DEFAULT);
+        $mobile = $data['mobile'] ?? '';
+        $is_part_time = intval($data['is_part_time'] ?? 0);
+        $status = intval($data['status'] ?? 1);
+
         $stmt = mysqli_prepare($conn, "INSERT INTO users (branch_id, role, name, email, password, mobile, is_part_time, status) VALUES (?, 'faculty', ?, ?, ?, ?, ?, ?)");
-        mysqli_stmt_bind_param($stmt, 'issssii', $data['branch_id'], $data['name'], $data['email'], $hashed, $data['mobile'], $data['is_part_time'], $data['status']);
+        mysqli_stmt_bind_param($stmt, 'issssii', $branch_id, $name, $email, $hashed, $mobile, $is_part_time, $status);
         return mysqli_stmt_execute($stmt);
     }
     public static function update($id, $data) {
         global $conn;
-        $stmt = mysqli_prepare($conn, "UPDATE users SET name=?, email=?, mobile=?, is_part_time=?, status=? WHERE id=? AND role='faculty'");
-        mysqli_stmt_bind_param($stmt, 'sssiii', $data['name'], $data['email'], $data['mobile'], $data['is_part_time'], $data['status'], $id);
+        $name = $data['name'] ?? '';
+        $email = $data['email'] ?? '';
+        $mobile = $data['mobile'] ?? '';
+        $is_part_time = intval($data['is_part_time'] ?? 0);
+        $status = intval($data['status'] ?? 1);
+
+        // If password provided and non-empty, update it as well
+        if (!empty($data['password'])) {
+            $password_raw = $data['password'];
+            $hashed = password_hash($password_raw, PASSWORD_DEFAULT);
+            $stmt = mysqli_prepare($conn, "UPDATE users SET name=?, email=?, mobile=?, is_part_time=?, status=?, password=? WHERE id=? AND role='faculty'");
+            mysqli_stmt_bind_param($stmt, 'sssiisi', $name, $email, $mobile, $is_part_time, $status, $hashed, $id);
+        } else {
+            $stmt = mysqli_prepare($conn, "UPDATE users SET name=?, email=?, mobile=?, is_part_time=?, status=? WHERE id=? AND role='faculty'");
+            mysqli_stmt_bind_param($stmt, 'sssiii', $name, $email, $mobile, $is_part_time, $status, $id);
+        }
+
         return mysqli_stmt_execute($stmt);
     }
     public static function delete($id) {
