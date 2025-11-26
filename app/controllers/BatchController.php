@@ -14,7 +14,7 @@ class BatchController {
     public static function create($data) {
         global $conn;
         $stmt = mysqli_prepare($conn, "INSERT INTO batches (branch_id, course_id, title, start_date, end_date, days_of_week, time_slot, capacity, status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
-        mysqli_stmt_bind_param($stmt, 'iissssisi', $data['branch_id'], $data['course_id'], $data['title'], $data['start_date'], $data['end_date'], $data['days_of_week'], $data['time_slot'], $data['capacity'], $data['status']);
+        mysqli_stmt_bind_param($stmt, 'iisssssis', $data['branch_id'], $data['course_id'], $data['title'], $data['start_date'], $data['end_date'], $data['days_of_week'], $data['time_slot'], $data['capacity'], $data['status']);
         return mysqli_stmt_execute($stmt);
     }
     public static function delete($id) {

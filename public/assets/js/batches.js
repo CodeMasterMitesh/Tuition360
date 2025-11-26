@@ -39,6 +39,10 @@ function showAddBatchModal() {
     }
     document.querySelector('#addBatchModal .modal-title') && (document.querySelector('#addBatchModal .modal-title').innerText = 'Add New Batch');
     const saveBtn = document.getElementById('saveBatchBtn'); if (saveBtn) { saveBtn.textContent = 'Save Batch'; saveBtn.style.display = ''; }
+    // reset days checkboxes
+    document.querySelectorAll('.day-checkbox').forEach(cb => cb.checked = false);
+    const daysHidden = document.getElementById('daysOfWeek'); if (daysHidden) daysHidden.value = '';
+    const branchSel = document.getElementById('batchBranch'); if (branchSel) branchSel.value = '0';
 }
 
 async function editBatch(id) {
@@ -48,10 +52,23 @@ async function editBatch(id) {
         if (res.success && res.data) {
             const b = res.data;
             document.getElementById('batchId').value = b.id || '';
-            document.querySelector('#addBatchForm [name="name"]').value = b.title || b.name || '';
+            document.querySelector('#addBatchForm [name="title"]').value = b.title || b.name || '';
             document.querySelector('#addBatchForm [name="start_date"]').value = b.start_date || '';
             document.querySelector('#addBatchForm [name="end_date"]').value = b.end_date || '';
             document.getElementById('batchCourse') && (document.getElementById('batchCourse').value = b.course_id || 0);
+            document.getElementById('batchBranch') && (document.getElementById('batchBranch').value = b.branch_id || 0);
+            document.querySelector('#addBatchForm [name="capacity"]').value = b.capacity || 30;
+            document.querySelector('#addBatchForm [name="time_slot"]').value = b.time_slot || '';
+            document.querySelector('#addBatchForm [name="status"]').value = b.status || 'planned';
+            // set days checkboxes
+            if (b.days_of_week) {
+                const parts = String(b.days_of_week).split(/[,;|\s]+/).map(s=>s.trim()).filter(Boolean);
+                document.querySelectorAll('.day-checkbox').forEach(cb => { cb.checked = parts.includes(cb.value); });
+                const daysHidden = document.getElementById('daysOfWeek'); if (daysHidden) daysHidden.value = parts.join(',');
+            } else {
+                document.querySelectorAll('.day-checkbox').forEach(cb => cb.checked = false);
+                const daysHidden = document.getElementById('daysOfWeek'); if (daysHidden) daysHidden.value = '';
+            }
 
             // ensure form is editable for edit
             const form = document.getElementById('addBatchForm'); if (form) Array.from(form.elements).forEach(el => el.disabled = false);
@@ -88,8 +105,11 @@ async function deleteBatch(id) {
 
 async function saveBatch() {
     const form = document.getElementById('addBatchForm');
+    // assemble days_of_week from checkboxes into hidden input
+    const selectedDays = Array.from(document.querySelectorAll('.day-checkbox:checked')).map(cb => cb.value);
+    const daysHidden = document.getElementById('daysOfWeek'); if (daysHidden) daysHidden.value = selectedDays.join(',');
     const params = new FormData(form);
-    if (!params.get('name')) { CRUD.toastError && CRUD.toastError('Name required'); return; }
+    if (!params.get('title')) { CRUD.toastError && CRUD.toastError('Title required'); return; }
     const id = params.get('id');
     const action = id ? 'update' : 'create';
     if (window.CRUD && CRUD.showLoading) CRUD.showLoading('tableContainer');

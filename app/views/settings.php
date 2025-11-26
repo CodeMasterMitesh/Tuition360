@@ -61,6 +61,15 @@ include __DIR__ . '/partials/nav.php';
                 </div>
             </div>
         </div>
+        <div class="col-md-3">
+            <div class="card text-bg-dark h-100">
+                <div class="card-body d-flex flex-column align-items-center justify-content-center">
+                    <i class="fas fa-user-tag fa-2x mb-2"></i>
+                    <h5 class="card-title">Batch Assignments</h5>
+                    <a href="index.php?page=batch_assignments" class="btn btn-light mt-2">Manage Assignments</a>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
 <?php include __DIR__ . '/partials/footer.php'; ?>

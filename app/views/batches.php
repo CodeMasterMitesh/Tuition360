@@ -73,7 +73,7 @@ foreach ($courses as $c) { $courseMap[$c['id']] = $c['title'] ?? $c['name'] ?? '
                             <tr>
                                 <td class="text-center"><input type="checkbox" class="row-select" data-id="<?= htmlspecialchars($batch['id'] ?? '') ?>"></td>
                                 <td><?= htmlspecialchars($batch['id'] ?? '') ?></td>
-                                <td><?= htmlspecialchars($batch['name'] ?? '') ?></td>
+                                <td><?= htmlspecialchars($batch['title'] ?? $batch['name'] ?? '') ?></td>
                                 <td>
                                     <?php
                                     $cid = $batch['course_id'] ?? $batch['course'] ?? null;
@@ -86,10 +86,12 @@ foreach ($courses as $c) { $courseMap[$c['id']] = $c['title'] ?? $c['name'] ?? '
                                 <td><?= htmlspecialchars($batch['start_date'] ?? '') ?></td>
                                 <td><?= htmlspecialchars($batch['end_date'] ?? '') ?></td>
                                 <td>
-                                    <?php if (isset($batch['status'])): ?>
-                                        <span class="status-badge <?= $batch['status'] === 'active' ? 'status-active' : 'status-inactive' ?>">
-                                            <?= ucfirst($batch['status']) ?>
-                                        </span>
+                                    <?php if (!empty($batch['status'])): 
+                                        $st = $batch['status'];
+                                        $activeStates = ['running'];
+                                        $cls = in_array($st, $activeStates) ? 'status-active' : 'status-inactive';
+                                    ?>
+                                        <span class="status-badge <?= $cls ?>"><?= htmlspecialchars(ucfirst($st)) ?></span>
                                     <?php else: ?>
                                         <span class="status-badge status-inactive">N/A</span>
                                     <?php endif; ?>
@@ -158,8 +160,17 @@ foreach ($courses as $c) { $courseMap[$c['id']] = $c['title'] ?? $c['name'] ?? '
                 <form id="addBatchForm">
                     <input type="hidden" name="id" id="batchId" value="">
                     <div class="mb-3">
-                        <label class="form-label">Batch Name</label>
-                        <input type="text" class="form-control" name="name" required>
+                        <label class="form-label">Title</label>
+                        <input type="text" class="form-control" name="title" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Branch</label>
+                        <select class="form-control" name="branch_id" id="batchBranch">
+                            <option value="0">-- Select Branch --</option>
+                            <?php foreach ($branches as $br): ?>
+                                <option value="<?= intval($br['id']) ?>"><?= htmlspecialchars($br['name']) ?></option>
+                            <?php endforeach; ?>
+                        </select>
                     </div>
                     <div class="mb-3">
                         <label class="form-label">Course</label>
@@ -170,13 +181,46 @@ foreach ($courses as $c) { $courseMap[$c['id']] = $c['title'] ?? $c['name'] ?? '
                             <?php endforeach; ?>
                         </select>
                     </div>
-                    <div class="mb-3">
-                        <label class="form-label">Start Date</label>
-                        <input type="date" class="form-control" name="start_date" required>
+                    <div class="row g-2">
+                        <div class="col-md-4">
+                            <label class="form-label">Start Date</label>
+                            <input type="date" class="form-control" name="start_date">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">End Date</label>
+                            <input type="date" class="form-control" name="end_date">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Capacity</label>
+                            <input type="number" class="form-control" name="capacity" min="1" value="30">
+                        </div>
                     </div>
-                    <div class="mb-3">
-                        <label class="form-label">End Date</label>
-                        <input type="date" class="form-control" name="end_date" required>
+                    <div class="mb-3 mt-2">
+                        <label class="form-label">Days of Week</label>
+                        <div class="d-flex gap-2 flex-wrap">
+                            <?php $days = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun']; foreach ($days as $d): ?>
+                                <div class="form-check">
+                                    <input class="form-check-input day-checkbox" type="checkbox" value="<?= $d ?>" id="day-<?= $d ?>">
+                                    <label class="form-check-label" for="day-<?= $d ?>"><?= $d ?></label>
+                                </div>
+                            <?php endforeach; ?>
+                        </div>
+                        <input type="hidden" name="days_of_week" id="daysOfWeek">
+                    </div>
+                    <div class="row g-2">
+                        <div class="col-md-6">
+                            <label class="form-label">Time Slot</label>
+                            <input type="text" class="form-control" name="time_slot" placeholder="e.g. 6:00PM - 8:00PM">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Status</label>
+                            <select class="form-control" name="status">
+                                <option value="planned">Planned</option>
+                                <option value="running">Running</option>
+                                <option value="completed">Completed</option>
+                                <option value="cancelled">Cancelled</option>
+                            </select>
+                        </div>
                     </div>
                 </form>
             </div>

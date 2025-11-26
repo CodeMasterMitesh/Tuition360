@@ -66,6 +66,9 @@ switch ($page) {
     case 'attendance_employee':
         require_once __DIR__ . '/app/views/attendance_employee.php';
         break;
+    case 'batch_assignments':
+        require_once __DIR__ . '/app/views/batch_assignments.php';
+        break;
     default:
         echo 'Page not found.';
 }
