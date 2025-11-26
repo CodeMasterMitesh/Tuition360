@@ -1,4 +1,5 @@
 <?php
+if (!defined('APP_INIT')) { http_response_code(403); exit('Forbidden'); }
 // app/controllers/FacultyController.php
 require_once __DIR__ . '/../../config/db.php';
 class FacultyController {

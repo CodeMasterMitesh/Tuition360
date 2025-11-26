@@ -1,4 +1,5 @@
 <?php
+if (!defined('APP_INIT')) { http_response_code(403); exit('Forbidden'); }
 // app/views/course.php (single-course manager)
 $courses = [];
 $controllerFile = __DIR__ . '/../controllers/CourseController.php';

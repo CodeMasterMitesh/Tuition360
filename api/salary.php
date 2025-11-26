@@ -1,4 +1,5 @@
 <?php
+require_once __DIR__ . '/init.php';
 // api/salary.php
 require_once __DIR__ . '/../config/db.php';
 $action = $_GET['action'] ?? '';

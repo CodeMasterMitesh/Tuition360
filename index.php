@@ -1,6 +1,7 @@
 <?php
 // public/index.php
 session_start();
+define('APP_INIT', true);
 require_once __DIR__ . '/config/db.php';
 // Simple router for demonstration
 // Simple router for demonstration

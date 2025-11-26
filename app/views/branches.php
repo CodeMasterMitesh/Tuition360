@@ -1,4 +1,5 @@
 <?php
+if (!defined('APP_INIT')) { http_response_code(403); exit('Forbidden'); }
 // app/views/branches.php
 require_once __DIR__ . '/../controllers/BranchController.php';
 $branches = BranchController::getAll();

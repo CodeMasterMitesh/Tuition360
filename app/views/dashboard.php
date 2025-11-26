@@ -1,4 +1,5 @@
 <?php
+if (!defined('APP_INIT')) { http_response_code(403); exit('Forbidden'); }
 // app/views/dashboard.php
 require_once __DIR__ . '/../controllers/BranchController.php';
 require_once __DIR__ . '/../controllers/UserController.php';
