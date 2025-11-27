@@ -7,7 +7,7 @@ class BatchController {
         global $conn;
         $rows = [];
         if ($branch_id) {
-            $stmt = mysqli_prepare($conn, "SELECT * FROM batches WHERE branch_id = ?");
+            $stmt = mysqli_prepare($conn, "SELECT b.*, c.title AS course_title FROM batches b LEFT JOIN courses c ON b.course_id = c.id WHERE b.branch_id = ?");
             $bid = intval($branch_id);
             mysqli_stmt_bind_param($stmt, 'i', $bid);
             if (mysqli_stmt_execute($stmt)) {
@@ -16,7 +16,7 @@ class BatchController {
             }
             return $rows;
         }
-        $res = mysqli_query($conn, "SELECT * FROM batches");
+        $res = mysqli_query($conn, "SELECT b.*, c.title AS course_title FROM batches b LEFT JOIN courses c ON b.course_id = c.id");
         while ($r = mysqli_fetch_assoc($res)) $rows[] = $r;
         return $rows;
     }

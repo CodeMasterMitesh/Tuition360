@@ -13,6 +13,21 @@ try {
             $rows = StudentController::getAll($branch_id);
             send_json(true, null, $rows);
             break;
+        case 'search':
+            $q = trim($_GET['q'] ?? '');
+            require_once __DIR__ . '/../config/db.php';
+            $out = [];
+            if ($q !== '') {
+                $like = '%' . $q . '%';
+                $stmt = mysqli_prepare($conn, "SELECT id,name,email,mobile FROM students WHERE name LIKE ? OR email LIKE ? OR mobile LIKE ? LIMIT 50");
+                mysqli_stmt_bind_param($stmt, 'sss', $like, $like, $like);
+                if (mysqli_stmt_execute($stmt)) {
+                    $res = mysqli_stmt_get_result($stmt);
+                    while ($r = mysqli_fetch_assoc($res)) $out[] = $r;
+                }
+            }
+            send_json(true, null, $out);
+            break;
         case 'get_courses':
             $id = intval($_GET['id'] ?? 0);
             require_once __DIR__ . '/../config/db.php';

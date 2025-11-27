@@ -150,7 +150,7 @@
      display: flex;
      justify-content: space-between;
      align-items: center;
-     margin-bottom: 2rem;
+     margin-bottom: 1rem;
      flex-wrap: wrap;
      gap: 1rem;
  }
@@ -209,9 +209,9 @@
      box-shadow: var(--shadow-heavy);
  }
 
- .card-body {
-     padding: 1.5rem;
- }
+.card-body {
+    padding: 0.75rem;
+}
 
  .card-title {
      font-weight: 600;
@@ -298,6 +298,31 @@
  .dashboard-container .row>div {
      animation: fadeInUp 0.5s ease forwards;
  }
+
+/* Slightly tighter spacing between dashboard cards */
+.dashboard-container .row {
+    gap: 0px;
+    --bs-gutter-x:1rem !important;
+    --bs-gutter-y:1rem !important;
+}
+
+/* Branch card small styles and summary tweaks */
+.branch-card .card-body.small { padding: .5rem; }
+.branch-list::-webkit-scrollbar { height: 8px; }
+.branch-list::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.15); border-radius: 6px; }
+.branch-card h6 { margin: 0; }
+.summary-row .card { height: 100%; }
+.summary-row .card .card-text { font-size: 1.6rem; margin-top: .25rem; }
+
+/* Expanded grid view for branch list */
+.branch-list.grid { display:flex; flex-wrap:wrap; overflow-x:visible; }
+.branch-list.grid .branch-card { flex: 1 0 22%; min-width: 180px; }
+.branch-list.compact .branch-card { min-width:220px; }
+
+/* Increase dashboard calendar minimum height so it shows more content */
+#dashboard-calendar {
+    min-height: 600px;
+}
 
  .dashboard-container .row>div:nth-child(1) {
      animation-delay: 0.1s;

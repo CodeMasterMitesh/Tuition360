@@ -15,18 +15,34 @@ class BatchAssignmentController {
         global $conn;
         $id = intval($id);
         $res = mysqli_query($conn, "SELECT * FROM batch_assignments WHERE id = $id LIMIT 1");
-        return mysqli_fetch_assoc($res);
+        $row = mysqli_fetch_assoc($res);
+        if ($row && isset($row['subjects']) && $row['subjects'] !== null) {
+            // ensure subjects parsed as array when returned to JSON
+            $decoded = json_decode($row['subjects'], true);
+            $row['subjects'] = is_array($decoded) ? $decoded : [];
+        } else {
+            $row['subjects'] = [];
+        }
+        return $row;
     }
     public static function create($data) {
         global $conn;
-        $stmt = mysqli_prepare($conn, "INSERT INTO batch_assignments (batch_id, user_id, role, assigned_at) VALUES (?, ?, ?, ?)");
-        mysqli_stmt_bind_param($stmt, 'iiss', $data['batch_id'], $data['user_id'], $data['role'], $data['assigned_at']);
+        $subjectsJson = null;
+        if (!empty($data['subjects'])) {
+            if (is_array($data['subjects'])) $subjectsJson = json_encode(array_values($data['subjects'])); else $subjectsJson = json_encode([$data['subjects']]);
+        }
+        $stmt = mysqli_prepare($conn, "INSERT INTO batch_assignments (batch_id, user_id, role, subjects, assigned_at) VALUES (?, ?, ?, ?, ?)");
+        mysqli_stmt_bind_param($stmt, 'iisss', $data['batch_id'], $data['user_id'], $data['role'], $subjectsJson, $data['assigned_at']);
         return mysqli_stmt_execute($stmt);
     }
     public static function update($id, $data) {
         global $conn;
-        $stmt = mysqli_prepare($conn, "UPDATE batch_assignments SET batch_id=?, user_id=?, role=?, assigned_at=? WHERE id=?");
-        mysqli_stmt_bind_param($stmt, 'iissi', $data['batch_id'], $data['user_id'], $data['role'], $data['assigned_at'], $id);
+        $subjectsJson = null;
+        if (!empty($data['subjects'])) {
+            if (is_array($data['subjects'])) $subjectsJson = json_encode(array_values($data['subjects'])); else $subjectsJson = json_encode([$data['subjects']]);
+        }
+        $stmt = mysqli_prepare($conn, "UPDATE batch_assignments SET batch_id=?, user_id=?, role=?, subjects=?, assigned_at=? WHERE id=?");
+        mysqli_stmt_bind_param($stmt, 'iisssi', $data['batch_id'], $data['user_id'], $data['role'], $subjectsJson, $data['assigned_at'], $id);
         return mysqli_stmt_execute($stmt);
     }
     public static function delete($id) {

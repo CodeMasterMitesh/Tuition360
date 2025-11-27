@@ -6,8 +6,17 @@ class CourseController {
     public static function getAll($branch_id = null) {
         global $conn;
         $courses = [];
+        // We'll return course metadata including total capacity across batches and enrolled count
         if ($branch_id) {
-            $stmt = mysqli_prepare($conn, "SELECT * FROM courses WHERE branch_id = ?");
+            $sql = "SELECT c.*, IFNULL(SUM(b.capacity),0) AS total_capacity, IFNULL(SUM(IFNULL(ec.enrolled,0)),0) AS enrolled_count
+                    FROM courses c
+                    LEFT JOIN batches b ON b.course_id = c.id
+                    LEFT JOIN (
+                        SELECT batch_id, COUNT(*) AS enrolled FROM enrollments GROUP BY batch_id
+                    ) ec ON ec.batch_id = b.id
+                    WHERE c.branch_id = ?
+                    GROUP BY c.id";
+            $stmt = mysqli_prepare($conn, $sql);
             $bid = intval($branch_id);
             mysqli_stmt_bind_param($stmt, 'i', $bid);
             if (mysqli_stmt_execute($stmt)) {
@@ -16,7 +25,14 @@ class CourseController {
             }
             return $courses;
         }
-        $result = mysqli_query($conn, "SELECT * FROM courses");
+        $sql = "SELECT c.*, IFNULL(SUM(b.capacity),0) AS total_capacity, IFNULL(SUM(IFNULL(ec.enrolled,0)),0) AS enrolled_count
+                FROM courses c
+                LEFT JOIN batches b ON b.course_id = c.id
+                LEFT JOIN (
+                    SELECT batch_id, COUNT(*) AS enrolled FROM enrollments GROUP BY batch_id
+                ) ec ON ec.batch_id = b.id
+                GROUP BY c.id";
+        $result = mysqli_query($conn, $sql);
         while ($row = mysqli_fetch_assoc($result)) {
             $courses[] = $row;
         }

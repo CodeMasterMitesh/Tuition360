@@ -6,6 +6,7 @@ require_once __DIR__ . '/../controllers/UserController.php';
 require_once __DIR__ . '/../controllers/CourseController.php';
 require_once __DIR__ . '/../controllers/StudentController.php';
 require_once __DIR__ . '/../controllers/FacultyController.php';
+require_once __DIR__ . '/../controllers/BatchController.php';
 
 $branches = BranchController::getAll();
 $users = UserController::getAll();
@@ -17,10 +18,12 @@ foreach ($branches as $b) {
     $bid = $b['id'];
     $students = StudentController::getAll($bid);
     $faculties = FacultyController::getAll($bid);
+    $batches = BatchController::getAll($bid);
     $branchStats[$bid] = [
         'branch' => $b,
         'students' => is_array($students) ? count($students) : 0,
         'faculty' => is_array($faculties) ? count($faculties) : 0,
+        'batches' => is_array($batches) ? count($batches) : 0,
     ];
 }
 ?>
@@ -28,87 +31,90 @@ foreach ($branches as $b) {
 <div class="dashboard-container" style="width:100%;max-width:none;">
         <!-- Dashboard header and controls removed for minimal look -->
 
-        <div class="row">
-            <div class="col-md-4 col-lg-3 mb-4">
+        <div class="row summary-row">
+            <div class="col-6 col-md-3">
                 <div class="card text-bg-primary">
                     <div class="card-body position-relative">
-                        <i class="fas fa-code-branch card-icon"></i>
-                        <h5 class="card-title">Total Branches</h5>
+                        <h6 class="card-title">Branches</h6>
                         <p class="card-text"><?= number_format(count($branches)) ?></p>
                     </div>
                 </div>
             </div>
-            <div class="col-md-4 col-lg-3 mb-4">
+            <div class="col-6 col-md-3">
                 <div class="card text-bg-success">
                     <div class="card-body position-relative">
                         <i class="fas fa-users card-icon"></i>
-                        <h5 class="card-title">Total Users</h5>
+                        <h6 class="card-title">Users</h6>
                         <p class="card-text"><?= number_format(count($users)) ?></p>
                     </div>
                 </div>
             </div>
-            <div class="col-md-4 col-lg-3 mb-4">
+            <div class="col-6 col-md-3">
                 <div class="card text-bg-warning">
                     <div class="card-body position-relative">
                         <i class="fas fa-book card-icon"></i>
-                        <h5 class="card-title">Total Courses</h5>
+                        <h6 class="card-title">Courses</h6>
                         <p class="card-text"><?= number_format(count($courses)) ?></p>
                     </div>
                 </div>
             </div>
-            <div class="col-md-4 col-lg-3 mb-4">
+            <div class="col-6 col-md-3">
                 <div class="card text-bg-danger">
                     <div class="card-body position-relative">
                         <i class="fas fa-user-graduate card-icon"></i>
-                        <h5 class="card-title">Total Students</h5>
+                        <h6 class="card-title">Students</h6>
                         <p class="card-text"><?= number_format(array_sum(array_map(fn($bs) => $bs['students'], $branchStats))) ?></p>
                     </div>
                 </div>
             </div>
-            <div class="col-md-4 col-lg-3 mb-4">
-                <div class="card text-bg-info">
-                    <div class="card-body position-relative">
-                        <i class="fas fa-chalkboard-teacher card-icon"></i>
-                        <h5 class="card-title">Total Faculty</h5>
-                        <p class="card-text"><?= number_format(array_sum(array_map(fn($bs) => $bs['faculty'], $branchStats))) ?></p>
+        </div>
+        <!-- Branch cards (single horizontal row) -->
+        <div class="row mt-3">
+            <div class="col-12">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <h6 class="mb-0">Branches</h6>
+                    <div>
+                        <button id="branchToggleBtn" class="btn btn-sm btn-outline-secondary" title="Toggle branch view"><i class="fas fa-expand-arrows-alt"></i> Toggle View</button>
+                    </div>
+                </div>
+                <div id="branchListContainer">
+                    <div class="branch-list" style="display:flex;gap:0.75rem;overflow-x:auto;padding-bottom:0.5rem;padding-top:0.5rem;">
+                        <?php foreach ($branchStats as $bs): $b = $bs['branch']; ?>
+                            <div class="card branch-card" style="min-width:220px;flex:0 0 auto;">
+                                <div class="card-body small p-2">
+                                    <div class="d-flex justify-content-between align-items-start">
+                                        <div>
+                                            <h6 class="mb-0" style="font-size:0.95rem"><?= htmlspecialchars($b['name'] ?? 'Branch') ?></h6>
+                                            <small class="text-muted" style="font-size:0.75rem"><?= htmlspecialchars($b['address'] ?? '') ?></small>
+                                        </div>
+                                        <div class="text-end">
+                                            <div style="font-weight:700;font-size:1.1rem"><?= intval($bs['students']) ?></div>
+                                            <small class="text-muted" style="font-size:0.7rem">Students</small>
+                                        </div>
+                                    </div>
+                                    <div class="mt-2 d-flex gap-2 justify-content-between">
+                                        <button class="btn btn-sm btn-outline-primary branch-students" data-branch="<?= intval($b['id']) ?>" data-bs-toggle="tooltip" title="View students in <?= htmlspecialchars($b['name'] ?? '') ?>"><i class="fas fa-user-graduate"></i> </button>
+                                        <button class="btn btn-sm btn-outline-secondary branch-faculty" data-branch="<?= intval($b['id']) ?>" data-bs-toggle="tooltip" title="View faculty for <?= htmlspecialchars($b['name'] ?? '') ?>"><i class="fas fa-chalkboard-teacher"></i> </button>
+                                        <button class="btn btn-sm btn-outline-dark branch-batches" data-branch="<?= intval($b['id']) ?>" data-bs-toggle="tooltip" title="View batches for <?= htmlspecialchars($b['name'] ?? '') ?>"> <i class="fas fa-layer-group"></i> <span style="font-size:0.85rem;margin-left:4px"><?= intval($bs['batches'] ?? 0) ?></span></button>
+                                    </div>
+                                </div>
+                            </div>
+                        <?php endforeach; ?>
                     </div>
                 </div>
             </div>
         </div>
-        <!-- Branch-wise stats -->
+        <!-- Calendar and Reminders side-by-side -->
         <div class="row mt-3">
-            <div class="col-12 col-lg-6">
-                <div class="row g-3">
-                    <?php foreach ($branchStats as $bs): $b = $bs['branch']; ?>
-                        <div class="col-12">
-                            <div class="card h-100">
-                                <div class="card-body">
-                                    <div class="d-flex justify-content-between align-items-start flex-wrap">
-                                        <div>
-                                            <h6 class="card-title mb-1"><?= htmlspecialchars($b['name'] ?? 'Branch') ?></h6>
-                                            <small class="text-muted"><?= htmlspecialchars($b['address'] ?? '') ?></small>
-                                        </div>
-                                        <div class="d-flex flex-column align-items-end gap-2">
-                                            <span class="status-badge status-active branch-students" style="cursor:pointer;min-width:120px;" data-branch="<?= intval($b['id']) ?>">Students: <?= intval($bs['students']) ?></span>
-                                            <span class="status-badge status-inactive branch-faculty" style="cursor:pointer;min-width:120px;" data-branch="<?= intval($b['id']) ?>">Faculty: <?= intval($bs['faculty']) ?></span>
-                                        </div>
-                                    </div>
-                                    <div class="mt-3 text-end">
-                                        <small class="text-muted">ID: <?= intval($b['id']) ?></small>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    <?php endforeach; ?>
-                </div>
-            </div>
-            <div class="col-12 col-lg-6 d-flex flex-column gap-3">
+            <div class="col-12 col-lg-8">
                 <div class="card">
                     <div class="card-body">
                         <h5 class="card-title">Calendar</h5>
                         <div id="dashboard-calendar"></div>
                     </div>
                 </div>
+            </div>
+            <div class="col-12 col-lg-4">
                 <div class="card">
                     <div class="card-body">
                         <h5 class="card-title">Reminders</h5>
@@ -118,25 +124,39 @@ foreach ($branches as $b) {
             </div>
         </div>
 
-        <!-- Courses list below branch cards, left side -->
-        <div class="row mt-2">
-            <div class="col-12 col-lg-6" style="order:-1;">
+        <!-- Courses full-width -->
+        <div class="row mt-3">
+            <div class="col-12">
                 <div class="card">
                     <div class="card-body">
-                        <h5 class="card-title">Courses (<?= count($courses) ?>)</h5>
-                        <ul class="list-unstyled mt-3">
-                            <?php if (empty($courses)): ?>
-                                <li class="text-muted">No courses found</li>
-                            <?php else: ?>
-                                <?php foreach (array_slice($courses, 0, 10) as $c): ?>
-                                    <li class="py-2 border-bottom">
-                                        <strong><?= htmlspecialchars($c['title'] ?? $c['name'] ?? '') ?></strong>
-                                        <div class="text-muted small">Branch: <?= intval($c['branch_id'] ?: 0) ?> • Fee: <?= htmlspecialchars($c['total_fee'] ?? '') ?></div>
-                                    </li>
-                                <?php endforeach; ?>
-                            <?php endif; ?>
-                        </ul>
-                        <?php if (count($courses) > 10): ?>
+                            <h5 class="card-title">Courses (<?= count($courses) ?>)</h5>
+                            <ul class="list-unstyled mt-3 row row-cols-1 row-cols-md-2 row-cols-lg-3 g-2">
+                                <?php if (empty($courses)): ?>
+                                    <li class="text-muted">No courses found</li>
+                                <?php else: ?>
+                                    <?php foreach (array_slice($courses, 0, 12) as $c): ?>
+                                        <?php
+                                            $capacity = intval($c['total_capacity'] ?? 0);
+                                            $enrolled = intval($c['enrolled_count'] ?? 0);
+                                            $seats_left = max(0, $capacity - $enrolled);
+                                        ?>
+                                        <li class="col">
+                                            <div class="p-2 border rounded h-100">
+                                                <div class="d-flex justify-content-between align-items-start">
+                                                    <strong><?= htmlspecialchars($c['title'] ?? $c['name'] ?? '') ?></strong>
+                                                    <span class="badge bg-secondary"><?= htmlspecialchars($c['duration_months'] ?? '') ?> mo</span>
+                                                </div>
+                                                <div class="text-muted small mt-1">Branch: <?= intval($c['branch_id'] ?: 0) ?></div>
+                                                <div class="mt-2 d-flex justify-content-between align-items-center">
+                                                    <div class="small text-muted">Fee: <?= htmlspecialchars($c['total_fee'] ?? '0.00') ?></div>
+                                                    <div class="small"><strong>Seats:</strong> <?= $seats_left ?></div>
+                                                </div>
+                                            </div>
+                                        </li>
+                                    <?php endforeach; ?>
+                                <?php endif; ?>
+                            </ul>
+                        <?php if (count($courses) > 12): ?>
                             <div class="mt-2 text-end"><a href="index.php?page=courses" class="btn btn-sm btn-action">View All Courses</a></div>
                         <?php endif; ?>
                     </div>
@@ -146,6 +166,41 @@ foreach ($branches as $b) {
     </div>
     
 <script>
+// Render reminders (birthdays) into the provided element. Exposed globally so other init paths can call it.
+window.renderDashboardReminders = async function(remindersEl) {
+    if (!remindersEl) return;
+    remindersEl.innerHTML = '<div class="text-muted">Loading reminders...</div>';
+    try {
+        const [studentsResp, employeesResp] = await Promise.all([
+            fetchJson('api/students.php?action=list'),
+            fetchJson('api/employee.php?action=list')
+        ]);
+        console.debug('reminders: studentsResp', studentsResp, 'employeesResp', employeesResp);
+        const students = (studentsResp && studentsResp.success && Array.isArray(studentsResp.data)) ? studentsResp.data : (Array.isArray(studentsResp) ? studentsResp : (studentsResp.data && Array.isArray(studentsResp.data) ? studentsResp.data : []));
+        const employees = (employeesResp && employeesResp.success && Array.isArray(employeesResp.data)) ? employeesResp.data : (Array.isArray(employeesResp) ? employeesResp : (employeesResp.data && Array.isArray(employeesResp.data) ? employeesResp.data : []));
+        let today = new Date();
+        let mmdd = (today.getMonth()+1).toString().padStart(2,'0') + '-' + today.getDate().toString().padStart(2,'0');
+        let studentBirthdays = (students||[]).filter(s => (s.dob||'').substr(5,5) === mmdd);
+        let employeeBirthdays = (employees||[]).filter(e => (e.dob||'').substr(5,5) === mmdd);
+        let html = '';
+        if (studentBirthdays.length) {
+            html += `<div><strong>Student Birthdays Today:</strong><ul>`;
+            studentBirthdays.forEach(s => { html += `<li>${s.name} (${s.dob})</li>`; });
+            html += `</ul></div>`;
+        }
+        if (employeeBirthdays.length) {
+            html += `<div><strong>Employee Birthdays Today:</strong><ul>`;
+            employeeBirthdays.forEach(e => { html += `<li>${e.name} (${e.dob})</li>`; });
+            html += `</ul></div>`;
+        }
+        if (!html) html = '<div class="text-muted">No birthdays today.</div>';
+        remindersEl.innerHTML = html;
+    } catch (err) {
+        console.error('Failed to load reminders', err);
+        remindersEl.innerHTML = '<div class="text-muted">Could not load reminders.</div>';
+    }
+};
+
 function initDashboard() {
     // Open students modal
     document.querySelectorAll('.branch-students').forEach(function(el) {
@@ -153,9 +208,11 @@ function initDashboard() {
             const branchId = el.getAttribute('data-branch');
             fetchJson(`api/students.php?action=list&branch_id=${branchId}`)
                 .then(data => {
+                    console.debug('branchStudents response', branchId, data);
                     let html = `<table class='table table-striped table-bordered' id='branchStudentsTable'><thead><tr><th>ID</th><th>Name</th><th>Email</th><th>Phone</th><th>Status</th></tr></thead><tbody>`;
-                    if (data && data.success && Array.isArray(data.data)) {
-                        data.data.forEach(s => {
+                    const rows = (data && data.success && data.data) ? (Array.isArray(data.data) ? data.data : Object.values(data.data)) : [];
+                    if (rows.length) {
+                        rows.forEach(s => {
                             html += `<tr><td>${s.id}</td><td>${s.name}</td><td>${s.email}</td><td>${s.mobile || s.phone || ''}</td><td>${s.status}</td></tr>`;
                         });
                     } else {
@@ -163,21 +220,43 @@ function initDashboard() {
                     }
                     html += `</tbody></table>`;
                     const container = document.getElementById('branchStudentsTableContainer');
-                    if (container) container.innerHTML = html;
-                    // Initialize DataTable
-                    setTimeout(() => {
-                        if (window.$ && window.$.fn.dataTable) {
-                            $('#branchStudentsTable').DataTable({ pageLength: 10, lengthMenu: [10,25,50,100], searching: true });
-                        }
-                    }, 100);
+                    if (container) container.innerHTML = html; else console.warn('branchStudentsTableContainer not found');
                     const modalEl = document.getElementById('branchStudentsModal');
                     if (modalEl) {
                         const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+                        // initialize DataTable with JS data after modal shown to avoid DOM races
+                        const onShown = function() {
+                            try {
+                                if (window.$ && window.$.fn.dataTable) {
+                                    if ($.fn.dataTable.isDataTable('#branchStudentsTable')) {
+                                        $('#branchStudentsTable').DataTable().clear().destroy();
+                                    }
+                                    $('#branchStudentsTable').DataTable({
+                                        data: rows,
+                                        columns: [
+                                            { data: 'id' },
+                                            { data: 'name' },
+                                            { data: 'email' },
+                                            { data: function(r){ return r.mobile || r.phone || ''; } },
+                                            { data: 'status' }
+                                        ],
+                                        pageLength: 10,
+                                        lengthMenu: [10,25,50,100],
+                                        searching: true,
+                                        responsive: true
+                                    });
+                                    setTimeout(function(){ try { $('#branchStudentsTable').DataTable().draw(false); } catch(e){} }, 300);
+                                }
+                            } catch(e) { console.warn('DataTable init failed for branchStudentsTable', e); }
+                            modalEl.removeEventListener('shown.bs.modal', onShown);
+                        };
+                        modalEl.addEventListener('shown.bs.modal', onShown);
                         modal.show();
                     }
                 }).catch(err => {
                     console.error('Failed to load branch students', err);
-                    alert('Could not load students for this branch. See console for details.');
+                    const container = document.getElementById('branchStudentsTableContainer');
+                    if (container) container.innerHTML = `<div class="text-danger">Could not load students: ${err.message || 'Error'}</div>`;
                 });
         });
     });
@@ -188,9 +267,11 @@ function initDashboard() {
             const branchId = el.getAttribute('data-branch');
             fetchJson(`api/faculty.php?action=list&branch_id=${branchId}`)
                 .then(data => {
+                    console.debug('branchFaculty response', branchId, data);
                     let html = `<table class='table table-striped table-bordered' id='branchFacultyTable'><thead><tr><th>ID</th><th>Name</th><th>Email</th><th>Phone</th><th>Status</th></tr></thead><tbody>`;
-                    if (data && data.success && Array.isArray(data.data)) {
-                        data.data.forEach(f => {
+                    const rows = (data && data.success && data.data) ? (Array.isArray(data.data) ? data.data : Object.values(data.data)) : [];
+                    if (rows.length) {
+                        rows.forEach(f => {
                             html += `<tr><td>${f.id}</td><td>${f.name}</td><td>${f.email}</td><td>${f.mobile || ''}</td><td>${f.status}</td></tr>`;
                         });
                     } else {
@@ -198,21 +279,102 @@ function initDashboard() {
                     }
                     html += `</tbody></table>`;
                     const container = document.getElementById('branchFacultyTableContainer');
-                    if (container) container.innerHTML = html;
-                    // Initialize DataTable
-                    setTimeout(() => {
-                        if (window.$ && window.$.fn.dataTable) {
-                            $('#branchFacultyTable').DataTable({ pageLength: 10, lengthMenu: [10,25,50,100], searching: true });
-                        }
-                    }, 100);
+                    if (container) container.innerHTML = html; else console.warn('branchFacultyTableContainer not found');
                     const modalEl = document.getElementById('branchFacultyModal');
                     if (modalEl) {
                         const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+                        const onShown = function() {
+                            try {
+                                    if (window.$ && window.$.fn.dataTable) {
+                                        if ($.fn.dataTable.isDataTable('#branchFacultyTable')) {
+                                            $('#branchFacultyTable').DataTable().clear().destroy();
+                                        }
+                                        $('#branchFacultyTable').DataTable({
+                                            data: rows,
+                                            columns: [
+                                                { data: 'id' },
+                                                { data: 'name' },
+                                                { data: 'email' },
+                                                { data: function(r){ return r.mobile || ''; } },
+                                                { data: 'status' }
+                                            ],
+                                            pageLength: 10,
+                                            lengthMenu: [10,25,50,100],
+                                            searching: true,
+                                            responsive: true
+                                        });
+                                        setTimeout(function(){ try { $('#branchFacultyTable').DataTable().draw(false); } catch(e){} }, 300);
+                                    }
+                            } catch(e) { console.warn('DataTable init failed for branchFacultyTable', e); }
+                            modalEl.removeEventListener('shown.bs.modal', onShown);
+                        };
+                        modalEl.addEventListener('shown.bs.modal', onShown);
                         modal.show();
                     }
                 }).catch(err => {
                     console.error('Failed to load branch faculty', err);
-                    alert('Could not load faculty for this branch. See console for details.');
+                    const container = document.getElementById('branchFacultyTableContainer');
+                    if (container) container.innerHTML = `<div class="text-danger">Could not load faculty: ${err.message || 'Error'}</div>`;
+                });
+        });
+    });
+
+    // Open batches modal
+    document.querySelectorAll('.branch-batches').forEach(function(el) {
+        el.addEventListener('click', function() {
+            const branchId = el.getAttribute('data-branch');
+            fetchJson(`api/batches.php?action=list&branch_id=${branchId}`)
+                .then(data => {
+                    console.debug('branchBatches response', branchId, data);
+                    let html = `<table class='table table-striped table-bordered' id='branchBatchesTable'><thead><tr><th>ID</th><th>Title</th><th>Course</th><th>Start</th><th>End</th><th>Capacity</th><th>Status</th></tr></thead><tbody>`;
+                    const rows = (data && data.success && data.data) ? (Array.isArray(data.data) ? data.data : Object.values(data.data)) : [];
+                    if (rows.length) {
+                        rows.forEach(b => {
+                            html += `<tr><td>${b.id}</td><td>${b.title}</td><td>${b.course_title || ''}</td><td>${b.start_date || ''}</td><td>${b.end_date || ''}</td><td>${b.capacity || ''}</td><td>${b.status || ''}</td></tr>`;
+                        });
+                    } else {
+                        html += `<tr><td colspan='7'>No batches found</td></tr>`;
+                    }
+                    html += `</tbody></table>`;
+                    const container = document.getElementById('branchBatchesTableContainer');
+                    if (container) container.innerHTML = html; else console.warn('branchBatchesTableContainer not found');
+                    const modalEl = document.getElementById('branchBatchesModal');
+                    if (modalEl) {
+                        const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
+                        const onShown = function() {
+                            try {
+                                if (window.$ && window.$.fn.dataTable) {
+                                    if ($.fn.dataTable.isDataTable('#branchBatchesTable')) {
+                                        $('#branchBatchesTable').DataTable().clear().destroy();
+                                    }
+                                    $('#branchBatchesTable').DataTable({
+                                        data: rows,
+                                        columns: [
+                                            { data: 'id' },
+                                            { data: 'title' },
+                                            { data: 'course_title', defaultContent: '' },
+                                            { data: 'start_date', defaultContent: '' },
+                                            { data: 'end_date', defaultContent: '' },
+                                            { data: 'capacity', defaultContent: '' },
+                                            { data: 'status', defaultContent: '' }
+                                        ],
+                                        pageLength: 10,
+                                        lengthMenu: [10,25,50,100],
+                                        searching: true,
+                                        responsive: true
+                                    });
+                                    setTimeout(function(){ try { $('#branchBatchesTable').DataTable().draw(false); } catch(e){} }, 300);
+                                }
+                            } catch(e) { console.warn('DataTable init failed for branchBatchesTable', e); }
+                            modalEl.removeEventListener('shown.bs.modal', onShown);
+                        };
+                        modalEl.addEventListener('shown.bs.modal', onShown);
+                        modal.show();
+                    }
+                }).catch(err => {
+                    console.error('Failed to load branch batches', err);
+                    const container = document.getElementById('branchBatchesTableContainer');
+                    if (container) container.innerHTML = `<div class="text-danger">Could not load batches: ${err.message || 'Error'}</div>`;
                 });
         });
     });
@@ -220,31 +382,8 @@ function initDashboard() {
     // Birthday reminders
     var remindersEl = document.getElementById('dashboard-reminders');
     if (remindersEl) {
-        Promise.all([
-            fetchJson('api/students.php?action=list'),
-            fetchJson('api/employee.php?action=list')
-        ]).then(([students, employees]) => {
-            let today = new Date();
-            let mmdd = (today.getMonth()+1).toString().padStart(2,'0') + '-' + today.getDate().toString().padStart(2,'0');
-            let studentBirthdays = (students.data||[]).filter(s => (s.dob||'').substr(5,5) === mmdd);
-            let employeeBirthdays = (employees.data||[]).filter(e => (e.dob||'').substr(5,5) === mmdd);
-            let html = '';
-            if (studentBirthdays.length) {
-                html += `<div><strong>Student Birthdays Today:</strong><ul>`;
-                studentBirthdays.forEach(s => { html += `<li>${s.name} (${s.dob})</li>`; });
-                html += `</ul></div>`;
-            }
-            if (employeeBirthdays.length) {
-                html += `<div><strong>Employee Birthdays Today:</strong><ul>`;
-                employeeBirthdays.forEach(e => { html += `<li>${e.name} (${e.dob})</li>`; });
-                html += `</ul></div>`;
-            }
-            if (!html) html = '<div class="text-muted">No birthdays today.</div>';
-            remindersEl.innerHTML = html;
-        }).catch(err => {
-            console.error('Failed to load reminders', err);
-            remindersEl.innerHTML = '<div class="text-muted">Could not load reminders.</div>';
-        });
+        // use centralized renderer that normalizes API responses
+        window.renderDashboardReminders(remindersEl);
     }
 
     // Calendar initialization
@@ -256,9 +395,9 @@ function initDashboard() {
         } else {
             // remove any existing calendar content
             calendarEl.innerHTML = '';
-            var calendar = new FullCalendar.Calendar(calendarEl, {
+                var calendar = new FullCalendar.Calendar(calendarEl, {
                 initialView: 'dayGridMonth',
-                height: 400,
+                height: 600,
                 headerToolbar: {
                     left: 'prev,next today',
                     center: 'title',
@@ -293,6 +432,12 @@ function initDashboard() {
                 }
             });
             calendar.render();
+            // expose calendar so resize/updateSize can be called after AJAX navigation or window resize
+            try { window._dashboardCalendar = calendar; } catch(e){}
+            if (!window._dashboardResizeAttached) {
+                window.addEventListener('resize', function() { if (window._dashboardCalendar && typeof window._dashboardCalendar.updateSize === 'function') window._dashboardCalendar.updateSize(); });
+                window._dashboardResizeAttached = true;
+            }
         }
     }
 }
@@ -319,6 +464,29 @@ window.initPage = window.initDashboard = initDashboard;
         }
     }, 100);
 })();
+(function branchListToggleInit(){
+    // restore branch list mode from localStorage and wire toggle button
+    function applyMode(mode) {
+        const list = document.querySelector('.branch-list');
+        if (!list) return;
+        list.classList.remove('grid','compact');
+        if (mode === 'grid') list.classList.add('grid');
+        else list.classList.add('compact');
+    }
+    document.addEventListener('DOMContentLoaded', function(){
+        try {
+            const saved = window.localStorage.getItem('branchListMode') || 'compact';
+            applyMode(saved);
+            const btn = document.getElementById('branchToggleBtn');
+            if (btn) btn.addEventListener('click', function(){
+                const cur = window.localStorage.getItem('branchListMode') || 'compact';
+                const next = cur === 'compact' ? 'grid' : 'compact';
+                window.localStorage.setItem('branchListMode', next);
+                applyMode(next);
+            });
+        } catch(e) { console.error('branchListToggleInit failed', e); }
+    });
+})();
 </script>
 
 <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.8/index.global.min.js"></script>
@@ -334,7 +502,7 @@ document.addEventListener('DOMContentLoaded', function() {
         } else {
             var calendar = new FullCalendar.Calendar(calendarEl, {
             initialView: 'dayGridMonth',
-            height: 400,
+            height: 600,
             headerToolbar: {
                 left: 'prev,next today',
                 center: 'title',
@@ -383,34 +551,10 @@ document.addEventListener('DOMContentLoaded', function() {
         }
     }
 
-    // Birthday reminders
+    // Birthday reminders (centralized renderer)
     var remindersEl = document.getElementById('dashboard-reminders');
     if (remindersEl) {
-            Promise.all([
-            fetchJson('api/students.php?action=list'),
-            fetchJson('api/employee.php?action=list')
-        ]).then(([students, employees]) => {
-            let today = new Date();
-            let mmdd = (today.getMonth()+1).toString().padStart(2,'0') + '-' + today.getDate().toString().padStart(2,'0');
-            let studentBirthdays = (students.data||[]).filter(s => (s.dob||'').substr(5,5) === mmdd);
-            let employeeBirthdays = (employees.data||[]).filter(e => (e.dob||'').substr(5,5) === mmdd);
-            let html = '';
-            if (studentBirthdays.length) {
-                html += `<div><strong>Student Birthdays Today:</strong><ul>`;
-                studentBirthdays.forEach(s => { html += `<li>${s.name} (${s.dob})</li>`; });
-                html += `</ul></div>`;
-            }
-            if (employeeBirthdays.length) {
-                html += `<div><strong>Employee Birthdays Today:</strong><ul>`;
-                employeeBirthdays.forEach(e => { html += `<li>${e.name} (${e.dob})</li>`; });
-                html += `</ul></div>`;
-            }
-            if (!html) html = '<div class="text-muted">No birthdays today.</div>';
-            remindersEl.innerHTML = html;
-        }).catch(err => {
-            console.error('Failed to load reminders', err);
-            remindersEl.innerHTML = '<div class="text-muted">Could not load reminders.</div>';
-        });
+        window.renderDashboardReminders(remindersEl);
     }
 });
 </script>

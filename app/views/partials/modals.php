@@ -148,3 +148,18 @@ if (!defined('APP_INIT')) {
         </div>
     </div>
 </div>
+
+            <!-- Branch Batches Modal -->
+            <div class="modal fade" id="branchBatchesModal" tabindex="-1" aria-hidden="true">
+                <div class="modal-dialog modal-xl">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">Branch Batches</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                        </div>
+                        <div class="modal-body">
+                            <div id="branchBatchesTableContainer"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>

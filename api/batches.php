@@ -8,7 +8,8 @@ try {
     require_once __DIR__ . '/../config/db.php';
     switch ($action) {
         case 'list':
-            $rows = BatchController::getAll();
+            $branch_id = isset($_GET['branch_id']) ? intval($_GET['branch_id']) : null;
+            $rows = BatchController::getAll($branch_id);
             echo json_encode(['success'=>true,'data'=>$rows]);
             break;
         case 'get':

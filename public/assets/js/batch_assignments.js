@@ -30,6 +30,91 @@ function initBatchAssignments(){
     });
 }
 
+// populate subjects when a batch is selected
+document.addEventListener('DOMContentLoaded', function(){
+    try {
+        const batchSelect = document.getElementById('assignmentBatch');
+        const subjectsSelect = document.getElementById('assignmentSubjects');
+        // subject map injected by server (if present)
+        const SUBJECT_MAP = window.__subjectMap || {};
+        if (batchSelect && subjectsSelect) {
+            batchSelect.addEventListener('change', async function(){
+                const opt = batchSelect.options[batchSelect.selectedIndex];
+                const courseId = opt ? opt.getAttribute('data-course') : null;
+                subjectsSelect.innerHTML = '';
+                if (!courseId) return;
+                try {
+                    const res = await fetch(`api/courses.php?action=get_subjects&id=${encodeURIComponent(courseId)}`, {credentials: 'same-origin'});
+                    const json = await res.json();
+                    const ids = Array.isArray(json.data) ? json.data.map(r => r.subject_id || r.id || r) : [];
+                    ids.forEach(id => {
+                        const title = SUBJECT_MAP[id] || (`Subject ${id}`);
+                        const opt = document.createElement('option'); opt.value = id; opt.textContent = title; subjectsSelect.appendChild(opt);
+                    });
+                } catch(e) { console.warn('Failed to load course subjects', e); }
+            });
+        }
+    } catch(e){ console.warn('subjects init failed', e); }
+});
+
+// Student add-more + autocomplete
+function createStudentRow(initial) {
+    const wrapper = document.createElement('div'); wrapper.className = 'd-flex gap-2 mb-2 align-items-center student-row';
+    const input = document.createElement('input'); input.type = 'text'; input.className = 'form-control student-search'; input.placeholder = 'Search student by name, email or phone';
+    const hidden = document.createElement('input'); hidden.type = 'hidden'; hidden.name = 'user_ids[]'; hidden.className = 'student-id';
+    const removeBtn = document.createElement('button'); removeBtn.type='button'; removeBtn.className='btn btn-sm btn-outline-danger'; removeBtn.innerHTML='<i class="fas fa-trash"></i>';
+    const suggestions = document.createElement('div'); suggestions.className='autocomplete-suggestions border bg-white position-absolute'; suggestions.style.zIndex = 1055; suggestions.style.display='none'; suggestions.style.maxHeight='200px'; suggestions.style.overflow='auto'; suggestions.style.minWidth='240px';
+
+    const container = document.createElement('div'); container.style.position='relative'; container.appendChild(input); container.appendChild(suggestions);
+    wrapper.appendChild(container); wrapper.appendChild(hidden); wrapper.appendChild(removeBtn);
+
+    // debounce
+    let timer = null;
+    input.addEventListener('input', function(){
+        clearTimeout(timer);
+        const q = input.value.trim();
+        hidden.value = '';
+        if (!q) { suggestions.style.display='none'; suggestions.innerHTML=''; return; }
+        timer = setTimeout(async function(){
+            try {
+                const res = await fetch(`api/students.php?action=search&q=${encodeURIComponent(q)}`, {credentials: 'same-origin'});
+                const json = await res.json();
+                const rows = Array.isArray(json.data) ? json.data : json.data || [];
+                suggestions.innerHTML = '';
+                if (!rows.length) { suggestions.style.display='none'; return; }
+                rows.forEach(r => {
+                    const it = document.createElement('div'); it.className='p-2 suggestion-item'; it.style.cursor='pointer'; it.textContent = (r.name || '') + (r.email ? ' — '+r.email : '') + (r.mobile ? ' ('+r.mobile+')' : '');
+                    it.addEventListener('click', function(){
+                        input.value = r.name || r.email || r.mobile || '';
+                        hidden.value = r.id || '';
+                        suggestions.style.display='none'; suggestions.innerHTML='';
+                    });
+                    suggestions.appendChild(it);
+                });
+                suggestions.style.display = 'block';
+            } catch(e) { console.warn('student search failed', e); }
+        }, 250);
+    });
+
+    removeBtn.addEventListener('click', function(){ wrapper.remove(); });
+    if (initial && initial.id) {
+        input.value = initial.name || initial.email || '';
+        hidden.value = initial.id;
+    }
+    return wrapper;
+}
+
+document.addEventListener('DOMContentLoaded', function(){
+    try {
+        const container = document.getElementById('assignmentStudentsContainer');
+        const addBtn = document.getElementById('addStudentRowBtn');
+        if (!container || !addBtn) return;
+        // add one empty row by default
+        container.appendChild(createStudentRow());
+        addBtn.addEventListener('click', function(){ container.appendChild(createStudentRow()); });
+    } catch(e){ console.warn('student rows init failed', e); }
+});
+
 window.initBatchAssignments = initBatchAssignments;
 if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initBatchAssignments); else try { initBatchAssignments(); } catch(e) { console.error('initBatchAssignments immediate failed', e); }
 
@@ -37,6 +122,28 @@ async function editAssignment(id){ if (window.CRUD && CRUD.showLoading) CRUD.sho
             const iso = new Date(dt.getTime() - dt.getTimezoneOffset()*60000).toISOString().slice(0,16);
             document.getElementById('assignmentAt').value = iso;
         } else document.getElementById('assignmentAt').value = '';
+        // trigger batch change to populate subjects, then set subjects and student selections
+        const batchEl = document.getElementById('assignmentBatch');
+        const subjectsEl = document.getElementById('assignmentSubjects');
+        const studentsEl = document.getElementById('assignmentStudents');
+        if (batchEl) {
+            // set value then dispatch change so subjects populate
+            batchEl.value = a.batch_id || 0;
+            batchEl.dispatchEvent(new Event('change'));
+            setTimeout(function(){
+                try {
+                    // set subjects if provided
+                    if (Array.isArray(a.subjects) && subjectsEl) {
+                        Array.from(subjectsEl.options).forEach(opt => { opt.selected = a.subjects.indexOf(opt.value) !== -1 || a.subjects.indexOf(parseInt(opt.value)) !== -1; });
+                    }
+                    // if role is student and we have a user_id that could be a single student, select it
+                    if (a.role === 'student' && studentsEl) {
+                        // if backend stored multiple students, it would come via separate rows; select the user_id if present
+                        Array.from(studentsEl.options).forEach(opt => { opt.selected = (parseInt(opt.value) === parseInt(a.user_id)); });
+                    }
+                } catch(e) { console.warn('failed to set subjects/students in editAssignment', e); }
+            }, 300);
+        }
         bootstrap.Modal.getOrCreateInstance(document.getElementById('addAssignmentModal')).show(); } else CRUD.toastError && CRUD.toastError('Not found'); }catch(e){ CRUD.toastError && CRUD.toastError('Failed: '+e.message);} finally{ CRUD.hideLoading && CRUD.hideLoading(); } }
 
 async function saveAssignment(){ const form = document.getElementById('addAssignmentForm'); const params = new FormData(form); const id = params.get('id'); const action = id ? 'update' : 'create'; try{ const res = await CRUD.post('api/batch_assignments.php?action='+action, params); if (res.success){ bootstrap.Modal.getOrCreateInstance(document.getElementById('addAssignmentModal')).hide(); CRUD.toastSuccess && CRUD.toastSuccess('Saved'); setTimeout(()=>location.reload(),600); } else CRUD.toastError && CRUD.toastError('Save failed'); }catch(e){ CRUD.toastError && CRUD.toastError('Request failed: '+e.message); } }

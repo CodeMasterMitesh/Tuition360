@@ -60,6 +60,22 @@ function refreshGlobalLists() {
     } catch(e) { console.error('refreshGlobalLists failed', e); }
 }
 
+// Notify user when lists are refreshed
+window.addEventListener('globalListsRefreshed', function(){
+    try {
+        if (window.CRUD && typeof window.CRUD.toastSuccess === 'function') {
+            window.CRUD.toastSuccess('Branch and course lists refreshed');
+        } else {
+            // fallback small toast
+            const el = document.createElement('div');
+            el.style.position = 'fixed'; el.style.top = '1rem'; el.style.right = '1rem'; el.style.zIndex = 2000;
+            el.className = 'alert alert-success'; el.innerText = 'Branch and course lists refreshed';
+            document.body.appendChild(el);
+            setTimeout(() => el.remove(), 3000);
+        }
+    } catch(e) { console.error('globalListsRefreshed handler failed', e); }
+});
+
 // Utility: fetch JSON safe
 async function fetchJson(url, opts) {
     const defaultOpts = { credentials: 'same-origin', headers: { 'X-Requested-With': 'XMLHttpRequest' } };

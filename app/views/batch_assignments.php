@@ -14,11 +14,20 @@ if (file_exists($controllerFile)) {
 $batchFile = __DIR__ . '/../controllers/BatchController.php';
 $batches = [];
 if (file_exists($batchFile)) { require_once $batchFile; if (class_exists('BatchController') && method_exists('BatchController','getAll')) $batches = BatchController::getAll(); }
+// load students and subjects for selects
+$studentFile = __DIR__ . '/../controllers/StudentController.php';
+$students = [];
+if (file_exists($studentFile)) { require_once $studentFile; if (class_exists('StudentController') && method_exists('StudentController','getAll')) $students = StudentController::getAll(); }
+$subjectFile = __DIR__ . '/../controllers/SubjectController.php';
+$subjects = [];
+if (file_exists($subjectFile)) { require_once $subjectFile; if (class_exists('SubjectController') && method_exists('SubjectController','getAll')) $subjects = SubjectController::getAll(); }
 $userFile = __DIR__ . '/../controllers/UserController.php';
 $users = [];
 if (file_exists($userFile)) { require_once $userFile; if (class_exists('UserController') && method_exists('UserController','getAll')) $users = UserController::getAll(); }
 $batchMap = []; foreach ($batches as $b) $batchMap[$b['id']] = $b['title'] ?? $b['name'] ?? ('Batch '.$b['id']);
 $userMap = []; foreach ($users as $u) $userMap[$u['id']] = $u['name'] ?? $u['email'] ?? ('User '.$u['id']);
+$studentMap = []; foreach ($students as $s) $studentMap[$s['id']] = $s['name'] ?? $s['email'] ?? ('Student '.$s['id']);
+$subjectMap = []; foreach ($subjects as $s) $subjectMap[$s['id']] = $s['title'] ?? $s['code'] ?? ('Subject '.$s['id']);
 ?>
 <?php include __DIR__ . '/partials/nav.php'; ?>
 <div class="container-fluid dashboard-container fade-in">
@@ -84,7 +93,7 @@ $userMap = []; foreach ($users as $u) $userMap[$u['id']] = $u['name'] ?? $u['ema
 
 <!-- Add/Edit Modal -->
 <div class="modal fade" id="addAssignmentModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog modal-sm">
+    <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header bg-primary text-white"><h5 class="modal-title">Add Assignment</h5><button type="button" class="btn-close" data-bs-dismiss="modal"></button></div>
             <div class="modal-body">
@@ -94,22 +103,37 @@ $userMap = []; foreach ($users as $u) $userMap[$u['id']] = $u['name'] ?? $u['ema
                         <select class="form-control" name="batch_id" id="assignmentBatch" required>
                             <option value="0">-- Select Batch --</option>
                             <?php foreach ($batches as $b): ?>
-                                <option value="<?= intval($b['id']) ?>"><?= htmlspecialchars($b['title'] ?? $b['name'] ?? ('Batch '.$b['id'])) ?></option>
-                            <?php endforeach; ?>
+                                    <option value="<?= intval($b['id']) ?>" data-course="<?= intval($b['course_id'] ?? 0) ?>"><?= htmlspecialchars($b['title'] ?? $b['name'] ?? ('Batch '.$b['id'])) ?></option>
+                                <?php endforeach; ?>
                         </select>
                     </div>
                     <div class="mb-2"><label class="form-label">User</label>
-                        <select class="form-control" name="user_id" id="assignmentUser" required>
-                            <option value="0">-- Select User --</option>
+                        <select class="form-control" name="user_id" id="assignmentUser">
+                            <option value="0">-- Select User (for faculty/employee) --</option>
                             <?php foreach ($users as $u): ?>
                                 <option value="<?= intval($u['id']) ?>"><?= htmlspecialchars($u['name'] ?? $u['email'] ?? ('User '.$u['id'])) ?></option>
                             <?php endforeach; ?>
                         </select>
+                        <small class="text-muted">Or select multiple <strong>students</strong> below to enroll them into the batch.</small>
+                    </div>
+                    <div class="mb-2"><label class="form-label">Students</label>
+                        <div id="assignmentStudentsContainer">
+                            <!-- dynamic student rows will be inserted here -->
+                        </div>
+                        <div class="mt-2">
+                            <button type="button" id="addStudentRowBtn" class="btn btn-sm btn-outline-primary">Add Student</button>
+                            <small class="text-muted ms-2">Search & add multiple students. Each added student will be submitted as <code>user_ids[]</code>.</small>
+                        </div>
+                    </div>
+                    <div class="mb-2"><label class="form-label">Subjects (from selected batch's course)</label>
+                        <select class="form-control" name="subjects[]" id="assignmentSubjects" multiple size="6"></select>
+                        <small class="text-muted">Select subjects that apply to this assignment (optional).</small>
                     </div>
                     <div class="mb-2"><label class="form-label">Role</label>
                         <select class="form-control" name="role">
                             <option value="faculty">Faculty</option>
                             <option value="employee">Employee</option>
+                            <option value="student">Student</option>
                         </select>
                     </div>
                     <div class="mb-2"><label class="form-label">Assigned At</label>
@@ -123,4 +147,8 @@ $userMap = []; foreach ($users as $u) $userMap[$u['id']] = $u['name'] ?? $u['ema
 </div>
 
 <?php include __DIR__ . '/partials/footer.php'; ?>
+<script>
+// inject subject map for client-side lookup
+window.__subjectMap = <?= json_encode($subjectMap ?? []) ?>;
+</script>
 <script src="../../../public/assets/js/batch_assignments.js"></script>

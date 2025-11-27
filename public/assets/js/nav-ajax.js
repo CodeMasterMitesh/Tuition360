@@ -122,6 +122,16 @@
 
             // Run any init functions if common.js exposes them (fallback)
             try { if (window.initPage) window.initPage(); } catch(e) { console.error(e); }
+            // Ensure dashboard calendar resizes if present
+            try { if (window._dashboardCalendar && typeof window._dashboardCalendar.updateSize === 'function') window._dashboardCalendar.updateSize(); } catch(e) {}
+            // Initialize Bootstrap tooltips (if Bootstrap is loaded)
+            try {
+                if (typeof bootstrap !== 'undefined' && bootstrap.Tooltip) {
+                    Array.from(document.querySelectorAll('[data-bs-toggle="tooltip"]')).forEach(el => {
+                        try { bootstrap.Tooltip.getOrCreateInstance(el); } catch(e) {}
+                    });
+                }
+            } catch(e) {}
             try { document.documentElement.classList.remove('tuition-wait-lastpage'); } catch(e) {}
         }).catch(err => {
             console.error('Error loading external scripts', err);
@@ -144,6 +154,14 @@
                 });
             } catch(e) {}
             try { if (window.initPage) window.initPage(); } catch(e) {}
+            try { if (window._dashboardCalendar && typeof window._dashboardCalendar.updateSize === 'function') window._dashboardCalendar.updateSize(); } catch(e) {}
+            try {
+                if (typeof bootstrap !== 'undefined' && bootstrap.Tooltip) {
+                    Array.from(document.querySelectorAll('[data-bs-toggle="tooltip"]')).forEach(el => {
+                        try { bootstrap.Tooltip.getOrCreateInstance(el); } catch(e) {}
+                    });
+                }
+            } catch(e) {}
             try { document.documentElement.classList.remove('tuition-wait-lastpage'); } catch(e) {}
         });
         // Scroll to top

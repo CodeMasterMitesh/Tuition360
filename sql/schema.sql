@@ -92,7 +92,8 @@ CREATE TABLE IF NOT EXISTS batch_assignments (
   id INT AUTO_INCREMENT PRIMARY KEY,
   batch_id INT NOT NULL,
   user_id INT NOT NULL,
-  role ENUM('faculty','employee') NOT NULL,
+  role ENUM('faculty','employee','student') NOT NULL,
+  subjects TEXT NULL,
   assigned_at DATETIME DEFAULT CURRENT_TIMESTAMP
 ) ENGINE=InnoDB;
 
