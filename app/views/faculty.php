@@ -30,23 +30,17 @@ foreach ($branches as $b) {
 ?>
 <?php include __DIR__ . '/partials/nav.php'; ?>
 <div class="container-fluid dashboard-container fade-in">
-    <!-- Breadcrumbs -->
-    <div class="breadcrumb-container d-flex justify-content-between align-items-center">
-        <nav aria-label="breadcrumb">
-            <ol class="breadcrumb">
-                <li class="breadcrumb-item"><a href="index.php?page=dashboard"><i class="fas fa-home"></i> Dashboard</a></li>
-                <li class="breadcrumb-item active" aria-current="page"><i class="fas fa-chalkboard-teacher"></i> Faculty</li>
-            </ol>
-        </nav>
-        <div class="d-flex align-items-center gap-2">
-            <button class="btn btn-danger btn-action" id="delete-selected-faculty" style="display:none; margin-right:0.5rem;">
-                <i class="fas fa-trash"></i> Delete Selected
-            </button>
-            <button class="btn btn-primary btn-action" data-bs-toggle="modal" data-bs-target="#addFacultyModal" onclick="prepareAddFaculty()">
-                <i class="fas fa-plus"></i> Add New Faculty
-            </button>
-        </div>
-    </div>
+    <?php
+    $page_icon = 'fas fa-chalkboard-teacher';
+    $page_title = 'Faculty';
+    $show_actions = true;
+    $action_buttons = [
+        ['id' => 'delete-selected-faculty-header', 'label' => 'Delete Selected', 'class' => 'btn-danger', 'onclick' => "deleteSelectedFaculty()", 'icon' => 'fas fa-trash'],
+        ['id' => 'export-faculty-header', 'label' => 'Export Excel', 'class' => 'btn-primary', 'onclick' => "exportToExcel()", 'icon' => 'fas fa-file-excel']
+    ];
+    $add_button = ['label' => 'Add New Faculty', 'modal' => 'addFacultyModal', 'form' => 'addFacultyForm'];
+    include __DIR__ . '/partials/page-header.php';
+    ?>
     <!-- Table Container -->
     <div class="advanced-table-container">
         <!-- table-controls removed (search/actions removed) -->
@@ -116,6 +110,9 @@ foreach ($branches as $b) {
                 </tbody>
             </table>
         </div>
+            <div class="d-flex justify-content-end gap-2 mt-2">
+                <button class="btn btn-danger" id="delete-selected-faculty-header" style="display:none;" onclick="deleteSelectedFaculty()"><i class="fas fa-trash"></i> Delete Selected</button>
+            </div>
         <!-- Pagination -->
         <?php if ($totalPages > 1): ?>
         <div class="pagination-container">
@@ -196,144 +193,5 @@ foreach ($branches as $b) {
     </div>
 </div>
 <?php include __DIR__ . '/partials/footer.php'; ?>
-<script>
-    // Initialize DataTables with per-column filters (faculty)
-    document.addEventListener('DOMContentLoaded', function() {
-        try {
-            const table = $('#faculty-table');
-            const thead = table.find('thead');
-            const filterRow = $('<tr>').addClass('filters');
-            thead.find('tr').first().children().each(function() {
-                const th = $('<th>');
-                if ($(this).find('input[type="checkbox"]').length) {
-                    th.html('');
-                } else if ($(this).text().trim() === 'Actions') th.html(''); else th.html('<input type="text" class="form-control form-control-sm" placeholder="Search">');
-                filterRow.append(th);
-            });
-            thead.append(filterRow);
-
-            const dataTable = table.DataTable({ dom: 'lrtip', orderCellsTop:true, fixedHeader:true, pageLength:10, lengthMenu:[10,25,50,100], responsive:true, columnDefs:[{orderable:false, targets:[0,-1]}] });
-            $('#faculty-table thead').on('keyup change', 'tr.filters input', function(){ const idx = $(this).closest('th').index(); const val = $(this).val(); if (dataTable.column(idx).search() !== val) dataTable.column(idx).search(val).draw(); });
-        } catch(e) {}
-        document.querySelector('.dashboard-container').classList.add('show');
-    });
-    // Smooth fade-in effect for page content
-    document.addEventListener('DOMContentLoaded', function() {
-        document.querySelector('.dashboard-container').classList.add('show');
-    });
-    // Export to Excel
-    function exportToExcel() {
-        showLoading();
-        setTimeout(() => {
-            window.location.href = '?page=faculty&export=excel';
-            hideLoading();
-        }, 1000);
-    }
-    // Print table
-    function printTable() {
-        const table = document.getElementById('faculty-table').cloneNode(true);
-        const printWindow = window.open('', '_blank');
-        printWindow.document.write(`
-            <html>
-                <head>
-                    <title>Faculty Report</title>
-                    <style>
-                        body { font-family: Arial, sans-serif; }
-                        table { width: 100%; border-collapse: collapse; }
-                        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-                        th { background-color: #f8f9fa; }
-                    </style>
-                </head>
-                <body>
-                    <h2>Faculty Report</h2>
-                    ${table.outerHTML}
-                    <p>Generated on: ${new Date().toLocaleDateString()}</p>
-                </body>
-            </html>
-        `);
-        printWindow.document.close();
-        printWindow.print();
-    }
-    // Refresh table
-    function refreshTable() {
-        showLoading();
-        setTimeout(() => {
-            window.location.reload();
-        }, 1000);
-    }
-    // Loading states
-    function showLoading() {
-        const container = document.getElementById('tableContainer');
-        const overlay = document.createElement('div');
-        overlay.className = 'loading-overlay';
-        overlay.innerHTML = `
-            <div class="spinner-border text-primary spinner" role="status">
-                <span class="visually-hidden">Loading...</span>
-            </div>
-        `;
-        container.style.position = 'relative';
-        container.appendChild(overlay);
-    }
-    function hideLoading() {
-        const overlay = document.querySelector('.loading-overlay');
-        if (overlay) overlay.remove();
-    }
-    // Faculty management functions
-    
-    function prepareAddFaculty() {
-        // Clear form for adding new faculty
-        try {
-            const form = document.getElementById('addFacultyForm');
-            form.reset();
-            const idEl = document.getElementById('facultyId');
-            if (idEl) idEl.value = '';
-            const title = document.getElementById('facultyModalTitle');
-            if (title) title.innerText = 'Add New Faculty';
-            const saveBtn = document.getElementById('saveFacultyBtn');
-            if (saveBtn) saveBtn.innerText = 'Save Faculty';
-        } catch (e) { /* ignore */ }
-    }
-
-    async function editFaculty(id){
-        CRUD.showLoading('tableContainer');
-        try {
-            const res = await CRUD.get(`api/faculty.php?action=get&id=${encodeURIComponent(id)}`);
-            if (res.success && res.data) {
-                const f = res.data;
-                document.getElementById('facultyId').value = f.id || '';
-                document.querySelector('#addFacultyForm [name="name"]').value = f.name || '';
-                document.querySelector('#addFacultyForm [name="email"]').value = f.email || '';
-                document.querySelector('#addFacultyForm [name="mobile"]').value = f.mobile || f.phone || '';
-                document.getElementById('facultyBranch').value = f.branch_id || 0;
-                // set modal to edit mode
-                const title = document.getElementById('facultyModalTitle');
-                if (title) title.innerText = 'Edit Faculty';
-                const saveBtn = document.getElementById('saveFacultyBtn');
-                if (saveBtn) saveBtn.innerText = 'Update Faculty';
-                const modalEl = document.getElementById('addFacultyModal');
-                const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
-                modal.show();
-            } else {
-                alert('Faculty not found');
-            }
-        } catch (e) { alert('Failed: ' + e.message); }
-        finally { CRUD.hideLoading(); }
-    }
-    async function viewFaculty(id){ await editFaculty(id); const form=document.getElementById('addFacultyForm'); Array.from(form.elements).forEach(el=>el.disabled=true); const saveBtn=document.querySelector('#addFacultyModal .btn-primary'); if(saveBtn) saveBtn.style.display='none'; document.querySelector('#addFacultyModal .modal-title').innerText='View Faculty'; }
-    async function deleteFaculty(id){ if(!confirm('Delete faculty '+id+'?')) return; CRUD.showLoading('tableContainer'); try{ const p=new URLSearchParams(); p.append('id', id); const res = await CRUD.post('api/faculty.php?action=delete', p); if(res.success) refreshTable(); else alert('Delete failed'); }catch(e){ alert('Delete failed: '+e.message);} finally{ CRUD.hideLoading(); } }
-    async function saveFaculty(){ const form=document.getElementById('addFacultyForm'); const params=new FormData(form); if(!params.get('name')){ alert('Name required'); return;} CRUD.showLoading('tableContainer'); try{ const id=params.get('id'); const action = id ? 'update' : 'create'; const res = await CRUD.post('api/faculty.php?action='+action, params); if(res.success){ const modalEl=document.getElementById('addFacultyModal'); const modal=bootstrap.Modal.getOrCreateInstance(modalEl); modal.hide(); refreshTable(); } else alert('Save failed: '+(res.message||res.error||'Unknown')); }catch(e){ alert('Request failed: '+e.message);} finally{ CRUD.hideLoading(); } }
-    // Keyboard shortcuts
-    document.addEventListener('keydown', function(e) {
-        if (e.ctrlKey && e.key === 'f') {
-            e.preventDefault();
-            const si = document.getElementById('searchInput'); if (si) si.focus();
-        }
-        if (e.ctrlKey && e.key === 'n') {
-            e.preventDefault();
-            document.querySelector('[data-bs-target="#addFacultyModal"]').click();
-        }
-    });
-</script>
-    <script>
-    // No additional DataTables buttons to append
-    </script>
+<!-- faculty script loaded from public/assets/js/faculty.js -->
+<script src="/public/assets/js/faculty.js"></script>

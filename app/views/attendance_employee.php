@@ -128,25 +128,4 @@ $totalPages = 1;
     </div>
 </div>
 <?php include __DIR__ . '/partials/footer.php'; ?>
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    try {
-        const table = $('#attendance-table');
-        const thead = table.find('thead');
-        const filterRow = $('<tr>').addClass('filters');
-        thead.find('tr').first().children().each(function(){ const th=$('<th>'); if($(this).text().trim()==='Actions') th.html(''); else th.html('<input type="text" class="form-control form-control-sm" placeholder="Search">'); filterRow.append(th); });
-        thead.append(filterRow);
-        const dataTable = table.DataTable({ dom: 'lrtip', orderCellsTop:true, fixedHeader:true, pageLength:10, lengthMenu:[10,25,50,100], responsive:true, columnDefs:[{orderable:false, targets:-1}] });
-        $('#attendance-table thead').on('keyup change','tr.filters input', function(){ const idx=$(this).closest('th').index(); const val=$(this).val(); if(dataTable.column(idx).search()!==val) dataTable.column(idx).search(val).draw(); });
-    } catch(e){}
-    document.querySelector('.dashboard-container').classList.add('show');
-});
-
-function exportToExcel(){ CRUD.showLoading('tableContainer'); setTimeout(()=>{ window.location.href='?page=attendance_employee&export=excel'; CRUD.hideLoading(); },800);} 
-function printTable(){ const table=document.getElementById('attendance-table').cloneNode(true); const w=window.open('','_blank'); w.document.write(`<html><head><title>Employee Attendance</title></head><body><h2>Employee Attendance</h2>${table.outerHTML}</body></html>`); w.document.close(); w.print(); }
-function refreshTable(){ CRUD.showLoading('tableContainer'); setTimeout(()=>location.reload(),600);} 
-async function editAttendance(id){ CRUD.showLoading('tableContainer'); try{ const res=await CRUD.get(`api/attendance.php?action=get&id=${encodeURIComponent(id)}`); if(res.success&&res.data){ const a=res.data; document.getElementById('attendanceId').value=a.id||''; document.querySelector('#addAttendanceForm [name="student"]').value=a.student||''; document.querySelector('#addAttendanceForm [name="date"]').value=a.date||''; document.querySelector('#addAttendanceForm [name="status"]').value=a.status||'present'; document.getElementById('attendanceBranchId').value=a.branch_id??0; const modalEl=document.getElementById('addAttendanceModal'); const modal=bootstrap.Modal.getOrCreateInstance(modalEl); modal.show(); } else CRUD.toastError('Record not found'); }catch(e){ CRUD.toastError('Failed: '+e.message);} finally{ CRUD.hideLoading(); } }
-async function viewAttendance(id){ await editAttendance(id); const form=document.getElementById('addAttendanceForm'); Array.from(form.elements).forEach(el=>el.disabled=true); const saveBtn=document.querySelector('#addAttendanceModal .btn-primary'); if(saveBtn) saveBtn.style.display='none'; document.querySelector('#addAttendanceModal .modal-title').innerText='View Attendance'; }
-async function deleteAttendance(id){ if(!confirm('Delete attendance '+id+'?')) return; CRUD.showLoading('tableContainer'); try{ const p=new URLSearchParams(); p.append('id', id); const res=await CRUD.post('api/attendance.php?action=delete', p); if(res.success){ CRUD.toastSuccess(res.message||'Deleted'); refreshTable(); } else CRUD.toastError('Delete failed'); }catch(e){ CRUD.toastError('Delete failed: '+e.message);} finally{ CRUD.hideLoading(); } }
-async function saveAttendance(){ const form=document.getElementById('addAttendanceForm'); const params=new FormData(form); if(!params.get('student')){ CRUD.toastError('Employee is required'); return;} const modalEl=document.getElementById('addAttendanceModal'); CRUD.modalLoadingStart(modalEl); try{ const res=await CRUD.post('api/attendance.php?action=mark', params); if(res.success){ const modal=bootstrap.Modal.getOrCreateInstance(modalEl); modal.hide(); CRUD.toastSuccess(res.message||'Saved'); refreshTable(); } else CRUD.toastError('Save failed: '+(res.message||res.error||'Unknown')); }catch(e){ CRUD.toastError('Save request failed: '+e.message);} finally{ CRUD.modalLoadingStop(modalEl); } }
-</script>
+<script src="/public/assets/js/attendance.js"></script>

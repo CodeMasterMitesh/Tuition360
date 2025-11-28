@@ -1,0 +1,4 @@
+// company.js
+function initCompany(){ const c=document.querySelector('.dashboard-container'); if(c) c.classList.add('show'); }
+if(document.readyState==='loading') document.addEventListener('DOMContentLoaded', initCompany); else try{ initCompany(); }catch(e){console.error(e);} 
+async function saveCompany(){ const form=document.getElementById('editCompanyForm'); const params=new FormData(form); if(window.CRUD && CRUD.showLoading) CRUD.showLoading(); try{ const res=await CRUD.post('api/company.php?action=save', params); if(res.success){ location.reload(); } else { window.CRUD && CRUD.toastError && CRUD.toastError('Save failed: '+(res.message||res.error||'Unknown')); } }catch(e){ window.CRUD && CRUD.toastError && CRUD.toastError('Request failed: '+e.message);} finally{ window.CRUD && CRUD.hideLoading && CRUD.hideLoading(); } }

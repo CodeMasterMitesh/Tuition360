@@ -17,15 +17,16 @@ $totalPages = 1;
 ?>
 <?php include __DIR__ . '/partials/nav.php'; ?>
 <div class="container-fluid dashboard-container fade-in">
-    <div class="breadcrumb-container d-flex justify-content-between align-items-center">
-        <nav aria-label="breadcrumb">
-            <ol class="breadcrumb">
-                <li class="breadcrumb-item"><a href="index.php?page=dashboard"><i class="fas fa-home"></i> Dashboard</a></li>
-                <li class="breadcrumb-item active" aria-current="page"><i class="fas fa-calendar-alt"></i> Leaves</li>
-            </ol>
-        </nav>
-        <button class="btn btn-primary btn-action" data-bs-toggle="modal" data-bs-target="#addLeaveModal"><i class="fas fa-plus"></i> Apply Leave</button>
-    </div>
+    <?php
+    $page_icon = 'fas fa-calendar-alt';
+    $page_title = 'Leaves';
+    $show_actions = true;
+    $action_buttons = [
+        ['id' => 'add-leave-btn', 'label' => 'Apply Leave', 'class' => 'btn-primary', 'onclick' => "showAddModal('addLeaveModal','addLeaveForm')", 'icon' => 'fas fa-plus']
+    ];
+    $add_button = ['label' => 'Apply Leave', 'modal' => 'addLeaveModal', 'form' => 'addLeaveForm'];
+    include __DIR__ . '/partials/page-header.php';
+    ?>
     <div class="advanced-table-container">
         <!-- table-controls removed (search/actions removed) -->
         <div class="table-responsive table-compact" id="tableContainer">
@@ -99,17 +100,4 @@ $totalPages = 1;
     </div>
 </div>
 <?php include __DIR__ . '/partials/footer.php'; ?>
-<script>
-document.addEventListener('DOMContentLoaded', function() {
-    try {
-        const table = $('#leaves-table');
-        const thead = table.find('thead');
-        const filterRow = $('<tr>').addClass('filters');
-        thead.find('tr').first().children().each(function(){ const th=$('<th>'); if($(this).text().trim()==='Actions') th.html(''); else th.html('<input type="text" class="form-control form-control-sm" placeholder="Search">'); filterRow.append(th); });
-        thead.append(filterRow);
-        const dataTable = table.DataTable({ dom: 'lrtip', orderCellsTop:true, fixedHeader:true, pageLength:10, lengthMenu:[10,25,50,100], responsive:true, columnDefs:[{orderable:false, targets:-1}] });
-        $('#leaves-table thead').on('keyup change','tr.filters input', function(){ const idx=$(this).closest('th').index(); const val=$(this).val(); if(dataTable.column(idx).search()!==val) dataTable.column(idx).search(val).draw(); });
-    } catch(e){}
-    document.querySelector('.dashboard-container').classList.add('show');
-});
-</script>
+<script src="/public/assets/js/leaves.js"></script>

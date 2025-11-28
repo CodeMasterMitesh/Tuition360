@@ -24,6 +24,7 @@
 
 <script src="/public/assets/js/common.js"></script>
 <script src="/public/assets/js/nav-ajax.js"></script>
+<script src="/public/assets/js/page-init.js"></script>
 <script>
     // Add active class to current page in navbar
     document.addEventListener('DOMContentLoaded', function() {

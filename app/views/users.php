@@ -17,20 +17,17 @@ $totalPages = 1;
 ?>
 <?php include __DIR__ . '/partials/nav.php'; ?>
 <div class="container-fluid dashboard-container fade-in">
-    <div class="breadcrumb-container d-flex justify-content-between align-items-center">
-        <nav aria-label="breadcrumb">
-            <ol class="breadcrumb">
-                <li class="breadcrumb-item"><a href="index.php?page=dashboard"><i class="fas fa-home"></i> Dashboard</a></li>
-                <li class="breadcrumb-item active" aria-current="page"><i class="fas fa-users"></i> Users</li>
-            </ol>
-        </nav>
-        <div class="d-flex align-items-center gap-2">
-            <button class="btn btn-danger btn-action" id="delete-selected-users" style="display:none; margin-right:0.5rem;">
-                <i class="fas fa-trash"></i> Delete Selected
-            </button>
-            <button class="btn btn-primary btn-action" data-bs-toggle="modal" data-bs-target="#addUserModal"><i class="fas fa-plus"></i> Add New User</button>
-        </div>
-    </div>
+    <?php
+    $page_icon = 'fas fa-users';
+    $page_title = 'Users';
+    $show_actions = true;
+    $action_buttons = [
+        ['label' => 'Export Excel', 'class' => 'btn-primary', 'onclick' => 'exportToExcel()', 'icon' => 'fas fa-file-excel'],
+        ['id' => 'delete-selected-users-header', 'label' => 'Delete Selected', 'class' => 'btn-danger', 'onclick' => "deleteSelectedUsers()", 'icon' => 'fas fa-trash']
+    ];
+    $add_button = ['label' => 'Add New User', 'modal' => 'addUserModal', 'form' => 'addUserForm'];
+    include __DIR__ . '/partials/page-header.php';
+    ?>
     <div class="advanced-table-container">
         <!-- table-controls removed (no search/actions required) -->
         <div class="table-responsive table-compact" id="tableContainer">
@@ -105,55 +102,4 @@ $totalPages = 1;
     </div>
 </div>
 <?php include __DIR__ . '/partials/footer.php'; ?>
-<script>
-    document.addEventListener('DOMContentLoaded', function() {
-        document.querySelector('.dashboard-container').classList.add('show');
-
-        // Initialize DataTable with per-column filters
-        try {
-            const table = $('#users-table');
-            const thead = table.find('thead');
-            const filterRow = $('<tr>').addClass('filters');
-            thead.find('tr').first().children().each(function() {
-                const th = $('<th>');
-                if ($(this).find('input[type="checkbox"]').length) {
-                    th.html('');
-                } else if ($(this).text().trim() === 'Actions') {
-                    th.html('');
-                } else {
-                    th.html('<input type="text" class="form-control form-control-sm" placeholder="Search">');
-                }
-                filterRow.append(th);
-            });
-            thead.append(filterRow);
-
-            const dataTable = table.DataTable({
-                dom: 'lrtip',
-                orderCellsTop: true,
-                fixedHeader: true,
-                pageLength: 10,
-                lengthMenu: [10,25,50,100],
-                responsive: true,
-                columnDefs: [{ orderable: false, targets: [0, -1] }]
-            });
-
-            $('#users-table thead').on('keyup change', 'tr.filters input', function() {
-                const idx = $(this).closest('th').index();
-                const val = $(this).val();
-                if (dataTable.column(idx).search() !== val) dataTable.column(idx).search(val).draw();
-            });
-        } catch (e) { /* ignore if DataTables not available */ }
-    });
-    function exportToExcel(){ CRUD.showLoading('tableContainer'); setTimeout(()=>{ window.location.href='?page=users&export=excel'; CRUD.hideLoading(); },800);} function printTable(){ const table=document.getElementById('users-table').cloneNode(true); const w=window.open('','_blank'); w.document.write(`<html><head><title>Users</title></head><body><h2>Users</h2>${table.outerHTML}</body></html>`); w.document.close(); w.print(); }
-    function refreshTable(){ CRUD.showLoading('tableContainer'); setTimeout(()=>location.reload(),600);} 
-    async function editUser(id){ CRUD.showLoading('tableContainer'); try{ const res=await CRUD.get(`api/users.php?action=get&id=${encodeURIComponent(id)}`); if(res.success&&res.data){ const u=res.data; document.getElementById('userId').value=u.id||''; document.querySelector('#addUserForm [name="name"]').value=u.name||''; document.querySelector('#addUserForm [name="email"]').value=u.email||''; document.querySelector('#addUserForm [name="mobile"]').value=u.mobile||''; document.querySelector('#addUserForm [name="role"]').value=u.role||'staff'; document.querySelector('#addUserForm [name="branch_id"]').value=u.branch_id||''; const modalEl=document.getElementById('addUserModal'); const modal=bootstrap.Modal.getOrCreateInstance(modalEl); modal.show(); } else { CRUD.toastError('User not found'); } }catch(e){ CRUD.toastError('Failed: '+e.message);} finally{ CRUD.hideLoading(); } }
-    async function viewUser(id){ await editUser(id); // reuse, then set view-only
-        const form=document.getElementById('addUserForm'); Array.from(form.elements).forEach(el=>el.disabled=true); const saveBtn=document.querySelector('#addUserModal .btn-primary'); if(saveBtn) saveBtn.style.display='none'; document.querySelector('#addUserModal .modal-title').innerText='View User';
-    }
-    async function deleteUser(id){ if(!confirm('Delete user '+id+'?')) return; CRUD.showLoading('tableContainer'); try{ const p=new URLSearchParams(); p.append('id', id); const res=await CRUD.post('api/users.php?action=delete', p); if(res.success){ CRUD.toastSuccess(res.message || 'Deleted'); refreshTable(); } else CRUD.toastError('Delete failed'); }catch(e){ CRUD.toastError('Delete failed: '+e.message);} finally{ CRUD.hideLoading(); } }
-    async function saveUser(){ const form=document.getElementById('addUserForm'); const params=new FormData(form); if(!params.get('name')||!params.get('email')){ CRUD.toastError('Name and email required'); return;} const modalEl=document.getElementById('addUserModal'); CRUD.modalLoadingStart(modalEl); try{ const id=params.get('id'); const action = id ? 'update' : 'create'; const res=await CRUD.post('api/users.php?action='+action, params); if(res.success){ const modal=bootstrap.Modal.getOrCreateInstance(modalEl); modal.hide(); CRUD.toastSuccess(res.message||'Saved'); refreshTable(); } else CRUD.toastError('Save failed: '+(res.message||res.error||'Unknown')); }catch(e){ CRUD.toastError('Request failed: '+e.message);} finally{ CRUD.modalLoadingStop(modalEl); } }
-</script>
-<script>
-// If DataTables + Buttons are initialized elsewhere, move Buttons into header-right
-// No DataTables Buttons to append for users table
-</script>
+<script src="/public/assets/js/users.js"></script>
