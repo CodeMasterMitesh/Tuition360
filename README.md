@@ -1,6 +1,6 @@
 # CampusLite ERP Management System
 # password
-**Project name (example):** TutorSphere (change as you like)
+**Project name (example):** CampusLite ERP (change as you like)
 
 ## Project Overview
 A multi-branch Tuition Management Web Application that supports:

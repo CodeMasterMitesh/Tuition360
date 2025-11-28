@@ -53,122 +53,50 @@ $totalPages = 1;
                                     <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addAttendanceModal">
                                         <i class="fas fa-plus"></i> Mark First Attendance
                                     </button>
-                                <?php include __DIR__ . '/partials/footer.php'; ?>
-                                <script src="/public/assets/js/attendance.js"></script>
-    // Loading states
-    function showLoading() {
-        const container = document.getElementById('tableContainer');
-        const overlay = document.createElement('div');
-        overlay.className = 'loading-overlay';
-        overlay.innerHTML = `
-            <div class="spinner-border text-primary spinner" role="status">
-                <span class="visually-hidden">Loading...</span>
+                                </div>
+                            </td>
+                        </tr>
+                    <?php endif; ?>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+<!-- Add Attendance Modal -->
+<div class="modal fade" id="addAttendanceModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title">Mark Attendance</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-        `;
-        container.style.position = 'relative';
-        container.appendChild(overlay);
-    }
-    function hideLoading() {
-        const overlay = document.querySelector('.loading-overlay');
-        if (overlay) overlay.remove();
-    }
-    // Attendance management functions
-    async function editAttendance(id) {
-        showLoading();
-        try {
-            const res = await CRUD.get(`api/attendance.php?action=get&id=${encodeURIComponent(id)}`);
-            if (res.success && res.data) {
-                const a = res.data;
-                document.getElementById('attendanceId').value = a.id || '';
-                document.querySelector('#addAttendanceForm [name="student"]').value = a.student || '';
-                document.querySelector('#addAttendanceForm [name="date"]').value = a.date || '';
-                document.querySelector('#addAttendanceForm [name="status"]').value = a.status || 'present';
-                document.getElementById('attendanceBranchId').value = a.branch_id ?? 0;
-                setModalModeAttendance('edit');
-                const modalEl = document.getElementById('addAttendanceModal');
-                const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
-                modal.show();
-            } else {
-                alert('Record not found');
-            }
-        } catch (e) { alert('Failed to load record: ' + e.message); }
-        finally { CRUD.hideLoading(); }
-    }
-
-    async function viewAttendance(id) {
-        showLoading();
-        try {
-            const res = await CRUD.get(`api/attendance.php?action=get&id=${encodeURIComponent(id)}`);
-            if (res.success && res.data) {
-                const a = res.data;
-                document.getElementById('attendanceId').value = a.id || '';
-                document.querySelector('#addAttendanceForm [name="student"]').value = a.student || '';
-                document.querySelector('#addAttendanceForm [name="date"]').value = a.date || '';
-                document.querySelector('#addAttendanceForm [name="status"]').value = a.status || 'present';
-                document.getElementById('attendanceBranchId').value = a.branch_id ?? 0;
-                setModalModeAttendance('view');
-                const modalEl = document.getElementById('addAttendanceModal');
-                const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
-                modal.show();
-            } else {
-                alert('Record not found');
-            }
-        } catch (e) { alert('Failed to load record: ' + e.message); }
-        finally { CRUD.hideLoading(); }
-    }
-
-    async function deleteAttendance(id) {
-        if (!confirm('Are you sure you want to delete this attendance record?')) return;
-        CRUD.showLoading('tableContainer');
-        try {
-            const params = new URLSearchParams(); params.append('id', id);
-            const res = await CRUD.post('api/attendance.php?action=delete', params);
-            if (res.success) refreshTable(); else alert('Delete failed');
-        } catch (e) { alert('Delete request failed: ' + e.message); }
-        finally { CRUD.hideLoading(); }
-    }
-
-    function setModalModeAttendance(mode) {
-        const form = document.getElementById('addAttendanceForm');
-        const saveBtn = document.querySelector('#addAttendanceModal .btn-primary');
-        if (mode === 'view') {
-            Array.from(form.elements).forEach(el => el.disabled = true);
-            saveBtn.style.display = 'none';
-            document.querySelector('#addAttendanceModal .modal-title').innerText = 'View Attendance';
-        } else {
-            Array.from(form.elements).forEach(el => el.disabled = false);
-            saveBtn.style.display = '';
-            document.querySelector('#addAttendanceModal .modal-title').innerText = mode === 'edit' ? 'Edit Attendance' : 'Mark Attendance';
-        }
-    }
-
-    async function saveAttendance() {
-        const form = document.getElementById('addAttendanceForm');
-        const params = new FormData(form);
-        if (!params.get('student')) { alert('Student is required'); return; }
-        CRUD.showLoading('tableContainer');
-        try {
-            const res = await CRUD.post('api/attendance.php?action=mark', params);
-            if (res.success) {
-                const modalEl = document.getElementById('addAttendanceModal');
-                const modal = bootstrap.Modal.getOrCreateInstance(modalEl);
-                modal.hide();
-                refreshTable();
-            } else {
-                alert('Save failed: ' + (res.message || res.error || 'Unknown'));
-            }
-        } catch (e) { alert('Save request failed: ' + e.message); }
-        finally { CRUD.hideLoading(); }
-    }
-    // Keyboard shortcuts
-    document.addEventListener('keydown', function(e) {
-        if (e.ctrlKey && e.key === 'f') {
-            e.preventDefault();
-            const si = document.getElementById('searchInput'); if (si) si.focus();
-        }
-        if (e.ctrlKey && e.key === 'n') {
-            e.preventDefault();
-            document.querySelector('[data-bs-target="#addAttendanceModal"]').click();
-        }
-    });
-</script>
+            <div class="modal-body">
+                <form id="addAttendanceForm">
+                    <input type="hidden" name="id" id="attendanceId" value="">
+                    <input type="hidden" name="branch_id" id="attendanceBranchId" value="0">
+                    <div class="mb-3">
+                        <label class="form-label">Student</label>
+                        <input type="text" class="form-control" name="student" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Date</label>
+                        <input type="date" class="form-control" name="date" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Status</label>
+                        <select class="form-control" name="status" required>
+                            <option value="present">Present</option>
+                            <option value="absent">Absent</option>
+                        </select>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="saveAttendance()">Save Attendance</button>
+            </div>
+        </div>
+    </div>
+</div>
+<?php include __DIR__ . '/partials/footer.php'; ?>
+<script src="/public/assets/js/attendance.js"></script>
