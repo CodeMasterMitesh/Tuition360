@@ -1,8 +1,7 @@
 <?php
 // api/auth.php
+require_once __DIR__ . '/init.php';
 require_once __DIR__ . '/../config/db.php';
-require_once __DIR__ . '/../config/session.php';
-start_secure_session();
 $action = $_GET['action'] ?? '';
 // helper to detect AJAX requests
 function is_ajax_request() {

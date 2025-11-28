@@ -5,18 +5,49 @@ require_once __DIR__ . '/../../config/db.php';
 class StudentController {
     public static function getAll($branch_id = null) {
         global $conn;
-        $sql = "SELECT * FROM students";
-        if ($branch_id) $sql .= " WHERE branch_id = " . intval($branch_id);
-        $res = mysqli_query($conn, $sql);
         $rows = [];
+        // try cached map for full student list when branch_id not provided
+        if (empty($branch_id)) {
+            // load cache helper if available
+            $map = null;
+            if (file_exists(__DIR__ . '/../helpers/cache.php')) require_once __DIR__ . '/../helpers/cache.php';
+            if (function_exists('cache_get')) {
+                $map = cache_get('students_all_v1');
+                if (is_array($map)) return $map;
+            }
+        }
+        if ($branch_id !== null && $branch_id !== false && $branch_id !== '') {
+            $bid = intval($branch_id);
+            $stmt = mysqli_prepare($conn, "SELECT * FROM students WHERE branch_id = ?");
+            if ($stmt) {
+                mysqli_stmt_bind_param($stmt, 'i', $bid);
+                mysqli_stmt_execute($stmt);
+                $res = mysqli_stmt_get_result($stmt);
+                while ($r = mysqli_fetch_assoc($res)) $rows[] = $r;
+                return $rows;
+            }
+        }
+        $res = mysqli_query($conn, "SELECT * FROM students");
         while ($r = mysqli_fetch_assoc($res)) $rows[] = $r;
+        // populate cache for full list
+        if (empty($branch_id) && function_exists('cache_set')) {
+            cache_set('students_all_v1', $rows, 60);
+        }
         return $rows;
     }
     public static function get($id) {
         global $conn;
         $id = intval($id);
-        $res = mysqli_query($conn, "SELECT * FROM students WHERE id = $id LIMIT 1");
-        return mysqli_fetch_assoc($res) ?: null;
+        $row = null;
+        $stmt = mysqli_prepare($conn, "SELECT * FROM students WHERE id = ? LIMIT 1");
+        if ($stmt) {
+            mysqli_stmt_bind_param($stmt, 'i', $id);
+            if (mysqli_stmt_execute($stmt)) {
+                $res = mysqli_stmt_get_result($stmt);
+                $row = mysqli_fetch_assoc($res) ?: null;
+            }
+        }
+        return $row;
     }
     public static function create($data) {
         global $conn;

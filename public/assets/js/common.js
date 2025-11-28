@@ -28,6 +28,23 @@ function showAddModal(modalId, formId, opts = {}) {
         const saveBtn = document.getElementById('assignmentSaveBtn');
         if (saveBtn) saveBtn.textContent = opts.saveLabel || 'Save';
     } catch(e) { /* ignore if elements not present */ }
+    // ensure CSRF hidden input exists in the form (for non-AJAX submissions)
+    try {
+        if (form) {
+            let csrfInput = form.querySelector('input[name="csrf_token"]');
+            if (!csrfInput) {
+                const token = (document.querySelector('meta[name="csrf-token"]') && document.querySelector('meta[name="csrf-token"]').content) || window.__csrfToken || '';
+                csrfInput = document.createElement('input');
+                csrfInput.type = 'hidden';
+                csrfInput.name = 'csrf_token';
+                csrfInput.value = token;
+                form.appendChild(csrfInput);
+            } else {
+                // update value in case token rotated
+                csrfInput.value = (document.querySelector('meta[name="csrf-token"]') && document.querySelector('meta[name="csrf-token"]').content) || window.__csrfToken || csrfInput.value;
+            }
+        }
+    } catch(e) { /* ignore */ }
     // reset selects inside subjects-dynamic if exists
     const subjectsDiv = document.getElementById('subjects-dynamic');
     if (subjectsDiv) {

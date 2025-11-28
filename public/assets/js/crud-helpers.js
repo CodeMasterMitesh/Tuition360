@@ -6,10 +6,19 @@ window.CRUD = {
     },
     post: async function(url, body) {
         const opts = { method: 'POST', credentials: 'same-origin' };
+        // Attach CSRF token header if available (prefer meta tag, then global var)
+        try {
+            const meta = document.querySelector('meta[name="csrf-token"]');
+            const token = (meta && meta.content) ? meta.content : (window.__csrfToken || null);
+            if (token) {
+                opts.headers = Object.assign({}, opts.headers || {}, { 'X-CSRF-Token': token });
+            }
+        } catch (e) { /* ignore */ }
+
         if (body instanceof FormData || body instanceof URLSearchParams) {
             opts.body = body;
         } else {
-            opts.headers = { 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8' };
+            opts.headers = Object.assign({}, opts.headers || {}, { 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8' });
             opts.body = new URLSearchParams(body);
         }
         const res = await fetch(url, opts);

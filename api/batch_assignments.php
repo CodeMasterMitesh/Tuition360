@@ -7,7 +7,9 @@ try {
     require_once __DIR__ . '/../config/db.php';
     switch ($action) {
         case 'list':
-            $rows = BatchAssignmentController::getAll();
+            $page = max(1, intval($_GET['page'] ?? 1));
+            $perPage = isset($_GET['per_page']) ? intval($_GET['per_page']) : 0;
+            $rows = BatchAssignmentController::getAll($page, $perPage);
             echo json_encode(['success'=>true,'data'=>$rows]);
             break;
         case 'get':

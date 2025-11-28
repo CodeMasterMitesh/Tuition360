@@ -413,6 +413,21 @@
      border-radius: 10px;
      padding: 0.5rem;
  }
+/* Uniform modal and grid styles for consistent UI */
+.modal .modal-dialog { max-width: 980px; }
+.modal .modal-content { border-radius: 12px; box-shadow: var(--soft-shadow-1); }
+.modal .modal-header { padding: 0.8rem 1rem; border-bottom: 1px solid rgba(0,0,0,0.05); }
+.modal .modal-body { padding: 1rem; }
+.modal .modal-footer { padding: 0.75rem 1rem; border-top: 1px solid rgba(0,0,0,0.03); }
+
+/* Uniform table/grid style */
+.table.data-table { border-collapse: collapse; }
+.table.data-table th, .table.data-table td { vertical-align: middle; padding: 0.6rem; }
+.advanced-table-container .table-responsive { border-radius: 10px; overflow: hidden; box-shadow: var(--soft-shadow-1); background: white; }
+
+/* Make modal inputs full width and consistent spacing */
+.modal .form-control { border-radius: 8px; }
+.modal .form-label { font-weight: 600; }
 
  .user-dropdown .dropdown-item {
      border-radius: 6px;
