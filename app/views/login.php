@@ -14,12 +14,14 @@ if (!defined('APP_INIT')) { http_response_code(403); exit('Forbidden'); }
 <body class="bg-light">
 <div class="container mt-5">
     <div class="row justify-content-center">
-        <div class="col-md-4">
-            <div class="card">
-                <div class="card-header text-center">
-                    <h4>Login</h4>
-                </div>
+        <div class="col-12 col-md-6 col-lg-4">
+            <div class="text-center mb-3 login-brand">
+                <img src="/public/assets/images/CampusLite_Erp_1.png" alt="CampusLite" class="login-logo" />
+                <h1 class="h4 mt-2">CampusLite ERP</h1>
+            </div>
+            <div class="card login-card">
                 <div class="card-body">
+                    <h5 class="card-title text-center mb-3">Sign in to your account</h5>
                     <form id="loginForm" method="post" action="/api/auth.php?action=login">
                         <div class="mb-3">
                             <label for="email" class="form-label">Email</label>
@@ -33,6 +35,7 @@ if (!defined('APP_INIT')) { http_response_code(403); exit('Forbidden'); }
                     </form>
                 </div>
             </div>
+            <div class="text-center mt-3 text-muted small">Powered by CampusLite</div>
         </div>
     </div>
 </div>

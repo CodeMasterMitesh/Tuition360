@@ -473,7 +473,8 @@ window.initPage = window.initDashboard = initDashboard;
         if (mode === 'grid') list.classList.add('grid');
         else list.classList.add('compact');
     }
-    document.addEventListener('DOMContentLoaded', function(){
+
+    function setup() {
         try {
             const saved = window.localStorage.getItem('branchListMode') || 'compact';
             applyMode(saved);
@@ -485,7 +486,15 @@ window.initPage = window.initDashboard = initDashboard;
                 applyMode(next);
             });
         } catch(e) { console.error('branchListToggleInit failed', e); }
-    });
+    }
+
+    // If the page fragment was loaded after DOMContentLoaded (AJAX navigation), run setup immediately.
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', setup);
+    } else {
+        // run now so toggle works for AJAX-inserted fragments
+        setup();
+    }
 })();
 </script>
 

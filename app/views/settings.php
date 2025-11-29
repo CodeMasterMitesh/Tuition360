@@ -5,7 +5,7 @@ include __DIR__ . '/partials/nav.php';
 ?>
 <div class="container dashboard-container">
     <div class="dashboard-header">
-        <h2 class="dashboard-title">Settings</h2>
+        <h2 class="dashboard-title">Settings & Admin</h2>
     </div>
     <div class="row g-4">
         <div class="col-md-3">
@@ -17,15 +17,17 @@ include __DIR__ . '/partials/nav.php';
                 </div>
             </div>
         </div>
+
         <div class="col-md-3">
             <div class="card text-bg-success h-100">
                 <div class="card-body d-flex flex-column align-items-center justify-content-center">
                     <i class="fas fa-code-branch fa-2x mb-2"></i>
-                    <h5 class="card-title">Branch</h5>
+                    <h5 class="card-title">Branches</h5>
                     <a href="index.php?page=branches" class="btn btn-light mt-2">Manage Branch</a>
                 </div>
             </div>
         </div>
+
         <div class="col-md-3">
             <div class="card text-bg-warning h-100">
                 <div class="card-body d-flex flex-column align-items-center justify-content-center">
@@ -35,6 +37,7 @@ include __DIR__ . '/partials/nav.php';
                 </div>
             </div>
         </div>
+
         <div class="col-md-3">
             <div class="card text-bg-info h-100">
                 <div class="card-body d-flex flex-column align-items-center justify-content-center">
@@ -44,6 +47,7 @@ include __DIR__ . '/partials/nav.php';
                 </div>
             </div>
         </div>
+
         <div class="col-md-3">
             <div class="card text-bg-secondary h-100">
                 <div class="card-body d-flex flex-column align-items-center justify-content-center">
@@ -53,15 +57,17 @@ include __DIR__ . '/partials/nav.php';
                 </div>
             </div>
         </div>
+
         <div class="col-md-3">
             <div class="card text-bg-danger h-100">
                 <div class="card-body d-flex flex-column align-items-center justify-content-center">
                     <i class="fas fa-briefcase fa-2x mb-2"></i>
-                    <h5 class="card-title">Employee</h5>
+                    <h5 class="card-title">Employees</h5>
                     <a href="index.php?page=employee" class="btn btn-light mt-2">Manage Employee</a>
                 </div>
             </div>
         </div>
+
         <div class="col-md-3">
             <div class="card text-bg-dark h-100">
                 <div class="card-body d-flex flex-column align-items-center justify-content-center">
@@ -71,6 +77,48 @@ include __DIR__ . '/partials/nav.php';
                 </div>
             </div>
         </div>
+
+        <!-- More admin tiles -->
+        <div class="col-md-3">
+            <div class="card text-bg-light h-100">
+                <div class="card-body d-flex flex-column align-items-center justify-content-center">
+                    <i class="fas fa-boxes-stacked fa-2x mb-2"></i>
+                    <h5 class="card-title">Assets</h5>
+                    <a href="index.php?page=assets" class="btn btn-dark mt-2">Manage Assets</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card text-bg-light h-100">
+                <div class="card-body d-flex flex-column align-items-center justify-content-center">
+                    <i class="fas fa-folder-open fa-2x mb-2"></i>
+                    <h5 class="card-title">Documents</h5>
+                    <a href="index.php?page=documents" class="btn btn-dark mt-2">Manage Documents</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card text-bg-light h-100">
+                <div class="card-body d-flex flex-column align-items-center justify-content-center">
+                    <i class="fas fa-file-export fa-2x mb-2"></i>
+                    <h5 class="card-title">Import / Export</h5>
+                    <a href="index.php?page=import_export" class="btn btn-dark mt-2">Import / Export</a>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card text-bg-light h-100">
+                <div class="card-body d-flex flex-column align-items-center justify-content-center">
+                    <i class="fas fa-database fa-2x mb-2"></i>
+                    <h5 class="card-title">Backup</h5>
+                    <a href="index.php?page=backup" class="btn btn-dark mt-2">Backup & Restore</a>
+                </div>
+            </div>
+        </div>
     </div>
 </div>
+
 <?php include __DIR__ . '/partials/footer.php'; ?>

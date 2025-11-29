@@ -20,7 +20,7 @@
      --light-color: #f8f9fa;
      --dark-color: #212529;
      --sidebar-width: 250px;
-     --header-height: 70px;
+    --header-height: 80px;
     --footer-height: 76px;
      --transition-speed: 0.3s;
      --shadow-light: 0 2px 10px rgba(0, 0, 0, 0.08);
@@ -58,14 +58,14 @@
      backdrop-filter: blur(6px) saturate(120%);
      -webkit-backdrop-filter: blur(6px) saturate(120%);
      box-shadow: 0 6px 18px rgba(11,15,30,0.06);
-     padding: 0.5rem 1rem;
-     transition: all var(--transition-speed);
-     position: fixed;
-     top: 0;
-     left: 0;
-     right: 0;
-     z-index: 1030;
-     height: var(--header-height);
+    padding: 0.45rem 1rem;
+    transition: all var(--transition-speed);
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 2050;
+    height: auto;
 }
 
  .navbar-brand {
@@ -84,8 +84,10 @@
  }
 
  .navbar-brand img {
-     transition: transform 0.3s ease;
-     border-radius: 50%;
+    transition: transform 0.3s ease;
+    border-radius: 8px;
+    max-height: 48px;
+    width: auto;
  }
 
  .navbar-brand:hover img {
@@ -142,9 +144,51 @@
 
  /* Enhanced Dashboard Styles */
  .dashboard-container {
-     margin-top: calc(var(--header-height) + 0px);
+    margin-top: calc(var(--header-height) + 10px);
     padding-bottom: var(--footer-height);
  }
+
+/* Ensure navbar flex alignment to avoid wrapping onto content */
+.navbar .container-fluid { display: flex; align-items: center; gap: 0.75rem; justify-content: space-between; }
+.navbar .container-fluid .navbar-brand { order: 1; flex: 0 0 auto; }
+.navbar .container-fluid .navbar-collapse { order: 2; flex: 1 1 auto; }
+.navbar .container-fluid .navbar-right { order: 3; flex: 0 0 auto; }
+.navbar .container-fluid .navbar-toggler { order: 4; flex: 0 0 auto; margin-left: 0.5rem; }
+.navbar .d-flex.align-items-center { margin-left: 0; }
+
+/* Notification badge slight reposition for better visual */
+.notification-badge { top: -6px; right: -6px; font-size: 0.65rem; }
+
+/* Pin the right-side controls (notifications / user) so they don't get wrapped into collapse */
+.navbar-right {
+    position: absolute;
+    right: 1rem;
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 2100;
+    display: flex;
+    gap: 0.5rem;
+    align-items: center;
+}
+
+/* When navbar is narrow, hide the username text to save space and keep avatar/icon visible */
+@media (max-width: 768px) {
+    .navbar-right .user-dropdown span { display: none; }
+    .navbar-brand { gap: 0.5rem; }
+    .navbar-brand img { max-height: 36px; }
+    .navbar-title { display: none; }
+}
+
+/* Ensure the collapse area occupies full width under the navbar, not pushing right controls */
+.navbar .collapse.navbar-collapse {
+    order: 2;
+    flex: 1 1 100%;
+}
+
+/* Prevent collapse animation from temporarily hiding background */
+.navbar .collapse {
+    background: #ffffff;
+}
 
  .dashboard-header {
      display: flex;
@@ -304,6 +348,47 @@
     gap: 0px;
     --bs-gutter-x:1rem !important;
     --bs-gutter-y:1rem !important;
+}
+
+/* Mobile navbar fixes: ensure contrast and readable collapsed menu */
+@media (max-width: 768px) {
+    .navbar {
+        background: #ffffff !important;
+        box-shadow: 0 6px 18px rgba(16,24,40,0.06);
+    }
+
+    .navbar-brand img {
+        max-width: 44px;
+        height: auto;
+        border-radius: 8px;
+    }
+
+    /* Ensure the toggler icon is dark on light background */
+    .navbar-toggler-icon {
+        background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='%23000' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e");
+    }
+
+    /* When collapsed (show), make menu panel readable */
+    .navbar-collapse.show {
+        background: #ffffff;
+        padding: 0.75rem 1rem;
+        border-radius: 8px;
+        box-shadow: var(--soft-shadow-1);
+        margin-top: 0.5rem;
+    }
+
+    /* Prevent a flash of transparent background while collapsing/expanding */
+    .navbar-collapse,
+    .navbar-collapse.collapsing {
+        background: #ffffff !important;
+        transition: none !important;
+        z-index: 1200;
+    }
+
+    /* Improve contrast of nav links against white background */
+    .navbar-nav .nav-link {
+        color: rgba(0,0,0,0.85) !important;
+    }
 }
 
 /* Branch card small styles and summary tweaks */
@@ -826,3 +911,14 @@ body {
     /* Always reserve vertical scrollbar space to avoid page shake when content changes */
     overflow-y: scroll;
 }
+
+/* Login page specific styles */
+.login-brand { text-align: center; margin-top: 1.5rem; }
+.login-logo { max-width: 140px; height: auto; display: inline-block; border-radius: 8px; box-shadow: var(--soft-shadow-1); }
+.login-card { margin-top: 0.5rem; border-radius: 12px; box-shadow: 0 10px 30px rgba(16,24,40,0.06); }
+@media (max-width: 576px) {
+    .login-logo { max-width: 110px; }
+    .login-card { margin: 0 1rem; }
+}
+
+.login-card .card-title { font-weight: 700; color: var(--dark-color); }

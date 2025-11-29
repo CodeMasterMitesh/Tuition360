@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -8,8 +9,10 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="stylesheet" href="../../../public/assets/css/style.css">
     <?php if (session_status() === PHP_SESSION_ACTIVE || (isset($_SESSION) && is_array($_SESSION))): ?>
-    <meta name="csrf-token" content="<?= htmlspecialchars($_SESSION['csrf_token'] ?? '') ?>">
-    <script>window.__csrfToken = '<?= htmlspecialchars($_SESSION['csrf_token'] ?? '') ?>';</script>
+        <meta name="csrf-token" content="<?= htmlspecialchars($_SESSION['csrf_token'] ?? '') ?>">
+        <script>
+            window.__csrfToken = '<?= htmlspecialchars($_SESSION['csrf_token'] ?? '') ?>';
+        </script>
     <?php endif; ?>
     <script>
         // If a last AJAX page is stored, mark document to hide initial main content
@@ -20,82 +23,135 @@
         } catch (e) {}
     </script>
 </head>
+
 <body>
-<nav class="navbar navbar-expand-lg navbar-dark">
-    <div class="container-fluid">
-        <a class="navbar-brand d-flex align-items-center" href="index.php?page=dashboard">
-            <img src="../../../public/assets/images/CampusLite_Erp_1.png" alt="Logo" width="70" height="70" class="me-2">
-            CampusLite ERP
-        </a>
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <div class="container-fluid">
+            <a class="navbar-brand d-flex align-items-center" href="index.php?page=dashboard">
+                <img src="../../../public/assets/images/CampusLite_Erp_1.png" alt="Logo" width="70" height="70" class="me-2">
+                <span class="navbar-title">CampusLite ERP</span>
+            </a>
 
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNavbar" aria-controls="mainNavbar" aria-expanded="false" aria-label="Toggle navigation">
-            <span class="navbar-toggler-icon"></span>
-        </button>
+            <div class="collapse navbar-collapse" id="mainNavbar">
+                <!-- top nav (replace existing list) -->
+                <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                    <li class="nav-item"><a class="nav-link active" href="index.php?page=dashboard"><i class="fas fa-tachometer-alt me-1"></i> Dashboard</a></li>
 
-        <div class="collapse navbar-collapse" id="mainNavbar">
-            <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
-                <li class="nav-item"><a class="nav-link active" href="index.php?page=dashboard"><i class="fas fa-tachometer-alt me-1"></i> Dashboard</a></li>
-                <!-- <li class="nav-item"><a class="nav-link" href="index.php?page=branches"><i class="fas fa-code-branch me-1"></i> Branches</a></li> -->
-                <!-- <li class="nav-item"><a class="nav-link" href="index.php?page=users"><i class="fas fa-users me-1"></i> Users</a></li> -->
-                <li class="nav-item"><a class="nav-link" href="index.php?page=students"><i class="fas fa-user-graduate me-1"></i> Students</a></li>
-                <li class="nav-item"><a class="nav-link" href="index.php?page=faculty"><i class="fas fa-chalkboard-teacher me-1"></i> Faculty</a></li>
-                <!-- <li class="nav-item"><a class="nav-link" href="index.php?page=employee"><i class="fas fa-briefcase me-1"></i> Employee</a></li> -->
-                <!-- <li class="nav-item"><a class="nav-link" href="index.php?page=courses"><i class="fas fa-book me-1"></i> Courses</a></li> -->
-                <li class="nav-item"><a class="nav-link" href="index.php?page=subjects"><i class="fas fa-book-open me-1"></i> Subjects</a></li>
-                <li class="nav-item"><a class="nav-link" href="index.php?page=batches"><i class="fas fa-layer-group me-1"></i> Batches</a></li>
-                <li class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle" href="#" id="attendanceMenu" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                        <i class="fas fa-calendar-check me-1"></i> Attendance
-                    </a>
-                    <ul class="dropdown-menu" aria-labelledby="attendanceMenu">
-                        <li><a class="dropdown-item" href="index.php?page=attendance_students">Student Attendance</a></li>
-                        <li><a class="dropdown-item" href="index.php?page=attendance_faculty">Faculty Attendance</a></li>
-                        <li><a class="dropdown-item" href="index.php?page=attendance_employee">Employee Attendance</a></li>
-                    </ul>
-                </li>
-                <li class="nav-item"><a class="nav-link" href="index.php?page=fees"><i class="fas fa-money-bill-wave me-1"></i> Fees</a></li>
-                <!-- <li class="nav-item"><a class="nav-link" href="index.php?page=salaries"><i class="fas fa-money-check me-1"></i> Salaries</a></li> -->
-                <li class="nav-item"><a class="nav-link" href="index.php?page=leaves"><i class="fas fa-umbrella-beach me-1"></i> Leaves</a></li>
-                <li class="nav-item"><a class="nav-link" href="index.php?page=reports"><i class="fas fa-chart-bar me-1"></i> Reports</a></li>
-            </ul>
+                    <!-- Resources (keep primary types visible) -->
+                    <li class="nav-item dropdown">
+                        <a class="nav-link" href="#" id="resourceMenu" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="fas fa-users me-1"></i> Resources
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="resourceMenu">
+                            <li><a class="dropdown-item" href="index.php?page=students"><i class="fas fa-user-graduate me-2"></i> Students</a></li>
+                            <li><a class="dropdown-item" href="index.php?page=faculty"><i class="fas fa-chalkboard-teacher me-2"></i> Faculty</a></li>
+                            <!-- employee moved to settings (see Settings page) -->
+                        </ul>
+                    </li>
 
-            <ul class="navbar-nav mb-2 mb-lg-0 align-items-center">
-                <!-- Notifications -->
-                <li class="nav-item dropdown me-2">
-                    <a class="nav-link position-relative" href="#" id="notificationDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                        <i class="fas fa-bell"></i>
-                        <span class="notification-badge">3</span>
-                    </a>
-                    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="notificationDropdown">
-                        <li>
-                            <h6 class="dropdown-header">Notifications</h6>
-                        </li>
-                        <li><a class="dropdown-item" href="#">New student registered</a></li>
-                        <li><a class="dropdown-item" href="#">Fee payment received</a></li>
-                        <li><a class="dropdown-item" href="#">Leave request pending</a></li>
-                        <li>
-                            <hr class="dropdown-divider">
-                        </li>
-                        <li><a class="dropdown-item text-center" href="#">View all</a></li>
-                    </ul>
-                </li>
+                    <!-- Keep high-usage direct links -->
+                    <li class="nav-item"><a class="nav-link" href="index.php?page=subjects"><i class="fas fa-book-open me-1"></i> Subjects</a></li>
+                    <li class="nav-item"><a class="nav-link" href="index.php?page=batches"><i class="fas fa-layer-group me-1"></i> Batches</a></li>
 
-                <!-- User Profile -->
-                <li class="nav-item dropdown user-dropdown">
-                    <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                        <img src="https://ui-avatars.com/api/?name=Admin+User&background=0D8ABC&color=fff" alt="User" width="32" height="32" class="rounded-circle me-1">
-                        <span>Admin User</span>
-                    </a>
-                    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
-                        <li><a class="dropdown-item" href="#"><i class="fas fa-user me-2"></i> Profile</a></li>
-                        <li><a class="dropdown-item" href="index.php?page=settings"><i class="fas fa-cog me-2"></i> Settings</a></li>
-                        <li>
-                            <hr class="dropdown-divider">
-                        </li>
-                        <li><a class="dropdown-item" href="index.php?page=logout"><i class="fas fa-sign-out-alt me-2"></i> Logout</a></li>
-                    </ul>
-                </li>
-            </ul>
+                    <!-- Attendance -->
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="attendanceMenu" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="fas fa-calendar-check me-1"></i> Attendance
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="attendanceMenu">
+                            <li><a class="dropdown-item" href="index.php?page=attendance_students">Student Attendance</a></li>
+                            <li><a class="dropdown-item" href="index.php?page=attendance_faculty">Faculty Attendance</a></li>
+                            <li><a class="dropdown-item" href="index.php?page=attendance_employee">Employee Attendance</a></li>
+                            <li>
+                                <hr class="dropdown-divider">
+                            </li>
+                            <li><a class="dropdown-item" href="index.php?page=attendance_qr">QR Code Attendance</a></li>
+                        </ul>
+                    </li>
+
+                    <!-- Finance (keep Fees visible; extras to More/Settings) -->
+                    <li class="nav-item"><a class="nav-link" href="index.php?page=fees"><i class="fas fa-money-bill-wave me-1"></i> Fees</a></li>
+
+                    <li class="nav-item"><a class="nav-link" href="index.php?page=leaves"><i class="fas fa-umbrella-beach me-1"></i> Leaves</a></li>
+
+                    <!-- Reports -->
+                    <li class="nav-item"><a class="nav-link" href="index.php?page=reports"><i class="fas fa-chart-bar me-1"></i> Reports</a></li>
+
+                    <!-- More dropdown: less-frequent modules moved here -->
+                    <li class="nav-item dropdown">
+                        <a class="nav-link" href="#" id="moreMenu" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="fas fa-ellipsis-h me-1"></i> More
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="moreMenu">
+                            <!-- admin/configuration moved under Settings but accessible here too -->
+                            <li><a class="dropdown-item" href="index.php?page=settings"><i class="fas fa-cog me-2"></i> Settings / Admin</a></li>
+                            <li><a class="dropdown-item" href="index.php?page=company"><i class="fas fa-building me-2"></i> Company</a></li>
+                            <li><a class="dropdown-item" href="index.php?page=branches"><i class="fas fa-code-branch me-2"></i> Branches</a></li>
+                            <li><a class="dropdown-item" href="index.php?page=users"><i class="fas fa-users-cog me-2"></i> Users</a></li>
+                            <li><a class="dropdown-item" href="index.php?page=courses"><i class="fas fa-book me-2"></i> Courses</a></li>
+                            <li><a class="dropdown-item" href="index.php?page=salaries"><i class="fas fa-money-check-alt me-2"></i> Salaries</a></li>
+                            <li><a class="dropdown-item" href="index.php?page=employee"><i class="fas fa-briefcase me-2"></i> Employees</a></li>
+                            <li><a class="dropdown-item" href="index.php?page=assets"><i class="fas fa-boxes-stacked me-2"></i> Assets</a></li>
+                            <li><a class="dropdown-item" href="index.php?page=documents"><i class="fas fa-folder-open me-2"></i> Documents</a></li>
+                            <li><a class="dropdown-item" href="index.php?page=certificates"><i class="fas fa-certificate me-2"></i> Certificates</a></li>
+                            <li><a class="dropdown-item" href="index.php?page=idcards"><i class="fas fa-id-card me-2"></i> ID Cards</a></li>
+                            <li>
+                                <hr class="dropdown-divider">
+                            </li>
+                            <li><a class="dropdown-item" href="index.php?page=payments"><i class="fas fa-credit-card me-2"></i> Online Payments</a></li>
+                            <li><a class="dropdown-item" href="index.php?page=expenses"><i class="fas fa-file-invoice-dollar me-2"></i> Expenses</a></li>
+                            <li><a class="dropdown-item" href="index.php?page=import_export"><i class="fas fa-file-export me-2"></i> Import / Export</a></li>
+                            <li><a class="dropdown-item" href="index.php?page=backup"><i class="fas fa-database me-2"></i> Backup & Restore</a></li>
+                        </ul>
+                    </li>
+                </ul>
+                </ul>
+            </div>
+
+            <!-- Keep notifications and user profile outside the collapsing menu so they stay visible on small screens -->
+            <div class="navbar-right d-flex align-items-center">
+                <ul class="navbar-nav mb-2 mb-lg-0 align-items-center">
+                    <!-- Notifications -->
+                    <li class="nav-item dropdown me-2">
+                        <a class="nav-link position-relative" href="#" id="notificationDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="fas fa-bell"></i>
+                            <span class="notification-badge">3</span>
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="notificationDropdown">
+                            <li>
+                                <h6 class="dropdown-header">Notifications</h6>
+                            </li>
+                            <li><a class="dropdown-item" href="#">New student registered</a></li>
+                            <li><a class="dropdown-item" href="#">Fee payment received</a></li>
+                            <li><a class="dropdown-item" href="#">Leave request pending</a></li>
+                            <li>
+                                <hr class="dropdown-divider">
+                            </li>
+                            <li><a class="dropdown-item text-center" href="#">View all</a></li>
+                        </ul>
+                    </li>
+
+                    <!-- User Profile -->
+                    <li class="nav-item dropdown user-dropdown">
+                        <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <img src="https://ui-avatars.com/api/?name=Admin+User&background=0D8ABC&color=fff" alt="User" width="32" height="32" class="rounded-circle me-1">
+                            <span>Admin User</span>
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+                            <li><a class="dropdown-item" href="#"><i class="fas fa-user me-2"></i> Profile</a></li>
+                            <li><a class="dropdown-item" href="index.php?page=settings"><i class="fas fa-cog me-2"></i> Settings</a></li>
+                            <li>
+                                <hr class="dropdown-divider">
+                            </li>
+                            <li><a class="dropdown-item" href="index.php?page=logout"><i class="fas fa-sign-out-alt me-2"></i> Logout</a></li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+
+            <!-- Move toggler after right-side controls so layout matches design (toggler at far right) -->
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNavbar" aria-controls="mainNavbar" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
         </div>
-    </div>
-</nav>
+    </nav>
