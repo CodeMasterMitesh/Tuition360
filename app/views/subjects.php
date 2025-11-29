@@ -55,14 +55,14 @@ $totalPages = 1;
                     <?php else: ?>
                         <?php foreach ($subjects as $s): ?>
                             <tr>
-                                <td class="text-center"><input type="checkbox" class="row-select" data-id="<?= htmlspecialchars($s['id'] ?? '') ?>"></td>
-                                <td><?= htmlspecialchars($s['id'] ?? '') ?></td>
-                                <td><?= htmlspecialchars($s['title'] ?? '') ?></td>
-                                <td><?= htmlspecialchars($s['description'] ?? '') ?></td>
-                                <td>
+                                <td class="text-center" data-label="Select"><input type="checkbox" class="row-select" data-id="<?= htmlspecialchars($s['id'] ?? '') ?>"></td>
+                                <td data-label="ID"><?= htmlspecialchars($s['id'] ?? '') ?></td>
+                                <td data-label="Title"><?= htmlspecialchars($s['title'] ?? '') ?></td>
+                                <td data-label="Description"><?= htmlspecialchars($s['description'] ?? '') ?></td>
+                                <td data-label="Actions">
                                     <div class="table-actions">
-                                        <button class="btn btn-sm btn-outline-primary btn-table" onclick="editSubject(<?= $s['id'] ?? 0 ?>)"><i class="fas fa-edit"></i></button>
-                                        <button class="btn btn-sm btn-outline-danger btn-table" onclick="deleteSubject(<?= $s['id'] ?? 0 ?>)"><i class="fas fa-trash"></i></button>
+                                        <button class="btn btn-sm btn-outline-primary btn-table" onclick="editSubject(<?= $s['id'] ?? 0 ?>)" title="Edit"><i class="fas fa-edit"></i></button>
+                                        <button class="btn btn-sm btn-outline-danger btn-table" onclick="deleteSubject(<?= $s['id'] ?? 0 ?>)" title="Delete"><i class="fas fa-trash"></i></button>
                                     </div>
                                 </td>
                             </tr>

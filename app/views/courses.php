@@ -54,9 +54,9 @@ $subjects = SubjectController::getAll();
                     <?php else: ?>
                         <?php foreach ($courses as $course): ?>
                             <tr>
-                                <td class="text-center"><input type="checkbox" class="row-select" data-id="<?= htmlspecialchars($course['id'] ?? '') ?>"></td>
-                                <td><?= htmlspecialchars($course['id'] ?? '') ?></td>
-                                <td>
+                                <td class="text-center" data-label="Select"><input type="checkbox" class="row-select" data-id="<?= htmlspecialchars($course['id'] ?? '') ?>"></td>
+                                <td data-label="ID"><?= htmlspecialchars($course['id'] ?? '') ?></td>
+                                <td data-label="Branch">
                                     <?php
                                     $bid = $course['branch_id'] ?? $course['branch'] ?? null;
                                     $branchName = '';
@@ -65,11 +65,11 @@ $subjects = SubjectController::getAll();
                                     ?>
                                     <?= htmlspecialchars($branchName) ?>
                                 </td>
-                                <td><?= htmlspecialchars($course['title'] ?? '') ?></td>
-                                <td><?= htmlspecialchars($course['description'] ?? '') ?></td>
-                                <td><?= htmlspecialchars($course['total_fee'] ?? '') ?></td>
-                                <td><?= htmlspecialchars($course['duration_months'] ?? '') ?></td>
-                                <td>
+                                <td data-label="Title"><?= htmlspecialchars($course['title'] ?? '') ?></td>
+                                <td data-label="Description"><?= htmlspecialchars($course['description'] ?? '') ?></td>
+                                <td data-label="Total Fee"><?= htmlspecialchars($course['total_fee'] ?? '') ?></td>
+                                <td data-label="Duration"><?= htmlspecialchars($course['duration_months'] ?? '') ?> months</td>
+                                <td data-label="Actions">
                                     <div class="table-actions">
                                         <button class="btn btn-sm btn-outline-primary btn-table" onclick="editCourse(<?= $course['id'] ?? 0 ?>)" title="Edit"><i class="fas fa-edit"></i></button>
                                         <button class="btn btn-sm btn-outline-info btn-table" onclick="viewCourse(<?= $course['id'] ?? 0 ?>)" title="View"><i class="fas fa-eye"></i></button>

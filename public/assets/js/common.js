@@ -13,7 +13,24 @@ function initAdvancedTable(tableSelector) {
         filterRow.append(th);
     });
     thead.append(filterRow);
-    const dataTable = table.DataTable({ dom: 'lrtip', orderCellsTop:true, fixedHeader:true, pageLength:10, lengthMenu:[10,25,50,100], responsive:true, columnDefs:[{orderable:false,targets:[0,-1]}] });
+    const dataTable = table.DataTable({ 
+        dom: 'lrtip', 
+        orderCellsTop:true, 
+        fixedHeader:true, 
+        pageLength:10, 
+        lengthMenu:[10,25,50,100], 
+        responsive: {
+            details: {
+                type: 'column',
+                target: 'tr'
+            }
+        },
+        columnDefs:[
+            {orderable:false,targets:[0,-1]},
+            {responsivePriority: 1, targets: 0},
+            {responsivePriority: 2, targets: -1}
+        ]
+    });
     table.find('thead').on('keyup change', 'tr.filters input', function(){ const idx=$(this).closest('th').index(); const val=$(this).val(); if (dataTable.column(idx).search()!==val) dataTable.column(idx).search(val).draw(); });
     return dataTable;
 }

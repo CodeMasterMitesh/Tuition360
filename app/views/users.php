@@ -59,18 +59,18 @@ $totalPages = 1;
                     <?php else: ?>
                         <?php foreach ($users as $u): ?>
                             <tr>
-                                <td class="text-center"><input type="checkbox" class="row-select" data-id="<?= htmlspecialchars($u['id'] ?? '') ?>"></td>
-                                <td><?= htmlspecialchars($u['id'] ?? '') ?></td>
-                                <td><?= htmlspecialchars($u['name'] ?? '') ?></td>
-                                <td><?= htmlspecialchars($u['role'] ?? '') ?></td>
-                                <td><?= htmlspecialchars($u['branch_id'] ?? '') ?></td>
-                                <td><?= htmlspecialchars($u['email'] ?? '') ?></td>
-                                <td><?= htmlspecialchars($u['mobile'] ?? '') ?></td>
-                                <td>
+                                <td class="text-center" data-label="Select"><input type="checkbox" class="row-select" data-id="<?= htmlspecialchars($u['id'] ?? '') ?>"></td>
+                                <td data-label="ID"><?= htmlspecialchars($u['id'] ?? '') ?></td>
+                                <td data-label="Name"><?= htmlspecialchars($u['name'] ?? '') ?></td>
+                                <td data-label="Role"><?= htmlspecialchars($u['role'] ?? '') ?></td>
+                                <td data-label="Branch"><?= htmlspecialchars($u['branch_id'] ?? '') ?></td>
+                                <td data-label="Email"><?= htmlspecialchars($u['email'] ?? '') ?></td>
+                                <td data-label="Mobile"><?= htmlspecialchars($u['mobile'] ?? '') ?></td>
+                                <td data-label="Actions">
                                     <div class="table-actions">
-                                        <button class="btn btn-sm btn-outline-primary btn-table" onclick="editUser(<?= $u['id'] ?? 0 ?>)"><i class="fas fa-edit"></i></button>
-                                        <button class="btn btn-sm btn-outline-info btn-table" onclick="viewUser(<?= $u['id'] ?? 0 ?>)"><i class="fas fa-eye"></i></button>
-                                        <button class="btn btn-sm btn-outline-danger btn-table" onclick="deleteUser(<?= $u['id'] ?? 0 ?>)"><i class="fas fa-trash"></i></button>
+                                        <button class="btn btn-sm btn-outline-primary btn-table" onclick="editUser(<?= $u['id'] ?? 0 ?>)" title="Edit"><i class="fas fa-edit"></i></button>
+                                        <button class="btn btn-sm btn-outline-info btn-table" onclick="viewUser(<?= $u['id'] ?? 0 ?>)" title="View"><i class="fas fa-eye"></i></button>
+                                        <button class="btn btn-sm btn-outline-danger btn-table" onclick="deleteUser(<?= $u['id'] ?? 0 ?>)" title="Delete"><i class="fas fa-trash"></i></button>
                                     </div>
                                 </td>
                             </tr>

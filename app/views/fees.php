@@ -103,7 +103,24 @@ document.addEventListener('DOMContentLoaded', function() {
         const filterRow = $('<tr>').addClass('filters');
         thead.find('tr').first().children().each(function(){ const th=$('<th>'); if($(this).text().trim()==='Actions') th.html(''); else th.html('<input type="text" class="form-control form-control-sm" placeholder="Search">'); filterRow.append(th); });
         thead.append(filterRow);
-        const dataTable = table.DataTable({ dom: 'lrtip', orderCellsTop:true, fixedHeader:true, pageLength:10, lengthMenu:[10,25,50,100], responsive:true, columnDefs:[{orderable:false, targets:-1}] });
+        const dataTable = table.DataTable({ 
+            dom: 'lrtip', 
+            orderCellsTop:true, 
+            fixedHeader:true, 
+            pageLength:10, 
+            lengthMenu:[10,25,50,100], 
+            responsive: {
+                details: {
+                    type: 'column',
+                    target: 'tr'
+                }
+            },
+            columnDefs:[
+                {orderable:false, targets:-1},
+                {responsivePriority: 1, targets: 0},
+                {responsivePriority: 2, targets: -1}
+            ]
+        });
         $('#fees-table thead').on('keyup change','tr.filters input', function(){ const idx=$(this).closest('th').index(); const val=$(this).val(); if(dataTable.column(idx).search()!==val) dataTable.column(idx).search(val).draw(); });
     } catch(e){}
     document.querySelector('.dashboard-container').classList.add('show');

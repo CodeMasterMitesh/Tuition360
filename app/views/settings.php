@@ -7,8 +7,8 @@ include __DIR__ . '/partials/nav.php';
     <div class="dashboard-header">
         <h2 class="dashboard-title">Settings & Admin</h2>
     </div>
-    <div class="row g-4">
-        <div class="col-md-3">
+    <div class="row g-4 row-cols-1 row-cols-sm-2 row-cols-md-3 row-cols-lg-4">
+        <div class="col">
             <div class="card text-bg-primary h-100">
                 <div class="card-body d-flex flex-column align-items-center justify-content-center">
                     <i class="fas fa-building fa-2x mb-2"></i>
@@ -18,7 +18,7 @@ include __DIR__ . '/partials/nav.php';
             </div>
         </div>
 
-        <div class="col-md-3">
+        <div class="col">
             <div class="card text-bg-success h-100">
                 <div class="card-body d-flex flex-column align-items-center justify-content-center">
                     <i class="fas fa-code-branch fa-2x mb-2"></i>
@@ -28,7 +28,7 @@ include __DIR__ . '/partials/nav.php';
             </div>
         </div>
 
-        <div class="col-md-3">
+        <div class="col">
             <div class="card text-bg-warning h-100">
                 <div class="card-body d-flex flex-column align-items-center justify-content-center">
                     <i class="fas fa-book fa-2x mb-2"></i>
@@ -38,7 +38,7 @@ include __DIR__ . '/partials/nav.php';
             </div>
         </div>
 
-        <div class="col-md-3">
+        <div class="col">
             <div class="card text-bg-info h-100">
                 <div class="card-body d-flex flex-column align-items-center justify-content-center">
                     <i class="fas fa-money-check-alt fa-2x mb-2"></i>
@@ -48,7 +48,7 @@ include __DIR__ . '/partials/nav.php';
             </div>
         </div>
 
-        <div class="col-md-3">
+        <div class="col">
             <div class="card text-bg-secondary h-100">
                 <div class="card-body d-flex flex-column align-items-center justify-content-center">
                     <i class="fas fa-users fa-2x mb-2"></i>
@@ -58,7 +58,7 @@ include __DIR__ . '/partials/nav.php';
             </div>
         </div>
 
-        <div class="col-md-3">
+        <div class="col">
             <div class="card text-bg-danger h-100">
                 <div class="card-body d-flex flex-column align-items-center justify-content-center">
                     <i class="fas fa-briefcase fa-2x mb-2"></i>
@@ -68,7 +68,7 @@ include __DIR__ . '/partials/nav.php';
             </div>
         </div>
 
-        <div class="col-md-3">
+        <div class="col">
             <div class="card text-bg-dark h-100">
                 <div class="card-body d-flex flex-column align-items-center justify-content-center">
                     <i class="fas fa-user-tag fa-2x mb-2"></i>
@@ -79,7 +79,7 @@ include __DIR__ . '/partials/nav.php';
         </div>
 
         <!-- More admin tiles -->
-        <div class="col-md-3">
+        <div class="col">
             <div class="card text-bg-light h-100">
                 <div class="card-body d-flex flex-column align-items-center justify-content-center">
                     <i class="fas fa-boxes-stacked fa-2x mb-2"></i>
@@ -89,7 +89,7 @@ include __DIR__ . '/partials/nav.php';
             </div>
         </div>
 
-        <div class="col-md-3">
+        <div class="col">
             <div class="card text-bg-light h-100">
                 <div class="card-body d-flex flex-column align-items-center justify-content-center">
                     <i class="fas fa-folder-open fa-2x mb-2"></i>
@@ -99,7 +99,7 @@ include __DIR__ . '/partials/nav.php';
             </div>
         </div>
 
-        <div class="col-md-3">
+        <div class="col">
             <div class="card text-bg-light h-100">
                 <div class="card-body d-flex flex-column align-items-center justify-content-center">
                     <i class="fas fa-file-export fa-2x mb-2"></i>
@@ -109,7 +109,7 @@ include __DIR__ . '/partials/nav.php';
             </div>
         </div>
 
-        <div class="col-md-3">
+        <div class="col">
             <div class="card text-bg-light h-100">
                 <div class="card-body d-flex flex-column align-items-center justify-content-center">
                     <i class="fas fa-database fa-2x mb-2"></i>

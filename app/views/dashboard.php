@@ -263,7 +263,16 @@ function initDashboard() {
                                         pageLength: 10,
                                         lengthMenu: [10,25,50,100],
                                         searching: true,
-                                        responsive: true
+                                        responsive: {
+                                            details: {
+                                                type: 'column',
+                                                target: 'tr'
+                                            }
+                                        },
+                                        columnDefs: [
+                                            {responsivePriority: 1, targets: 0},
+                                            {responsivePriority: 2, targets: -1}
+                                        ]
                                     });
                                     setTimeout(function(){ try { $('#branchStudentsTable').DataTable().draw(false); } catch(e){} }, 300);
                                 }
@@ -321,7 +330,16 @@ function initDashboard() {
                                             pageLength: 10,
                                             lengthMenu: [10,25,50,100],
                                             searching: true,
-                                            responsive: true
+                                            responsive: {
+                                                details: {
+                                                    type: 'column',
+                                                    target: 'tr'
+                                                }
+                                            },
+                                            columnDefs: [
+                                                {responsivePriority: 1, targets: 0},
+                                                {responsivePriority: 2, targets: -1}
+                                            ]
                                         });
                                         setTimeout(function(){ try { $('#branchFacultyTable').DataTable().draw(false); } catch(e){} }, 300);
                                     }
@@ -381,7 +399,16 @@ function initDashboard() {
                                         pageLength: 10,
                                         lengthMenu: [10,25,50,100],
                                         searching: true,
-                                        responsive: true
+                                        responsive: {
+                                            details: {
+                                                type: 'column',
+                                                target: 'tr'
+                                            }
+                                        },
+                                        columnDefs: [
+                                            {responsivePriority: 1, targets: 0},
+                                            {responsivePriority: 2, targets: -1}
+                                        ]
                                     });
                                     setTimeout(function(){ try { $('#branchBatchesTable').DataTable().draw(false); } catch(e){} }, 300);
                                 }

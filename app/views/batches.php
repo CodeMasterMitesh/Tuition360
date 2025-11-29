@@ -72,10 +72,10 @@ foreach ($courses as $c) { $courseMap[$c['id']] = $c['title'] ?? $c['name'] ?? '
                     <?php else: ?>
                         <?php foreach ($batches as $batch): ?>
                             <tr>
-                                <td class="text-center"><input type="checkbox" class="row-select" data-id="<?= htmlspecialchars($batch['id'] ?? '') ?>"></td>
-                                <td><?= htmlspecialchars($batch['id'] ?? '') ?></td>
-                                <td><?= htmlspecialchars($batch['title'] ?? $batch['name'] ?? '') ?></td>
-                                <td>
+                                <td class="text-center" data-label="Select"><input type="checkbox" class="row-select" data-id="<?= htmlspecialchars($batch['id'] ?? '') ?>"></td>
+                                <td data-label="ID"><?= htmlspecialchars($batch['id'] ?? '') ?></td>
+                                <td data-label="Name"><?= htmlspecialchars($batch['title'] ?? $batch['name'] ?? '') ?></td>
+                                <td data-label="Course">
                                     <?php
                                     $cid = $batch['course_id'] ?? $batch['course'] ?? null;
                                     $courseName = '';
@@ -84,9 +84,9 @@ foreach ($courses as $c) { $courseMap[$c['id']] = $c['title'] ?? $c['name'] ?? '
                                     ?>
                                     <?= htmlspecialchars($courseName) ?>
                                 </td>
-                                <td><?= htmlspecialchars($batch['start_date'] ?? '') ?></td>
-                                <td><?= htmlspecialchars($batch['end_date'] ?? '') ?></td>
-                                <td>
+                                <td data-label="Start Date"><?= htmlspecialchars($batch['start_date'] ?? '') ?></td>
+                                <td data-label="End Date"><?= htmlspecialchars($batch['end_date'] ?? '') ?></td>
+                                <td data-label="Status">
                                     <?php if (!empty($batch['status'])): 
                                         $st = $batch['status'];
                                         $activeStates = ['running'];
@@ -97,7 +97,7 @@ foreach ($courses as $c) { $courseMap[$c['id']] = $c['title'] ?? $c['name'] ?? '
                                         <span class="status-badge status-inactive">N/A</span>
                                     <?php endif; ?>
                                 </td>
-                                <td>
+                                <td data-label="Actions">
                                     <div class="table-actions">
                                         <button class="btn btn-sm btn-outline-primary btn-table" onclick="editBatch(<?= $batch['id'] ?? 0 ?>)" title="Edit">
                                             <i class="fas fa-edit"></i>

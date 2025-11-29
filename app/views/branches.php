@@ -56,8 +56,8 @@ $totalPages = 1;
                         <?php else: ?>
                             <?php foreach ($branches as $branch): ?>
                                 <tr>
-                                    <td><?= htmlspecialchars($branch['id']) ?></td>
-                                    <td>
+                                    <td data-label="ID"><?= htmlspecialchars($branch['id']) ?></td>
+                                    <td data-label="Name">
                                         <div class="d-flex align-items-center">
                                             <div class="bg-primary rounded-circle d-flex align-items-center justify-content-center me-2" style="width: 32px; height: 32px;">
                                                 <i class="fas fa-code-branch text-white" style="font-size: 0.8rem;"></i>
@@ -65,10 +65,10 @@ $totalPages = 1;
                                             <strong><?= htmlspecialchars($branch['name']) ?></strong>
                                         </div>
                                     </td>
-                                    <td><?= htmlspecialchars($branch['address']) ?></td>
-                                    <td><?= htmlspecialchars($branch['phone']) ?></td>
-                                    <td><?= htmlspecialchars($branch['email']) ?></td>
-                                    <td>
+                                    <td data-label="Address"><?= htmlspecialchars($branch['address']) ?></td>
+                                    <td data-label="Phone"><?= htmlspecialchars($branch['phone']) ?></td>
+                                    <td data-label="Email"><?= htmlspecialchars($branch['email']) ?></td>
+                                    <td data-label="Status">
                                         <?php if (isset($branch['status'])): ?>
                                             <span class="status-badge <?= $branch['status'] === 'active' ? 'status-active' : 'status-inactive' ?>">
                                                 <?= ucfirst($branch['status']) ?>
@@ -77,7 +77,7 @@ $totalPages = 1;
                                             <span class="status-badge status-inactive">N/A</span>
                                         <?php endif; ?>
                                     </td>
-                                    <td>
+                                    <td data-label="Actions">
                                         <div class="table-actions">
                                             <button class="btn btn-sm btn-outline-primary btn-table" onclick="editBranch(<?= $branch['id'] ?>)" title="Edit">
                                                 <i class="fas fa-edit"></i>
@@ -144,7 +144,24 @@ $totalPages = 1;
                 });
                 thead.append(filterRow);
 
-                const dataTable = table.DataTable({ dom: 'lrtip', orderCellsTop:true, fixedHeader:true, pageLength:10, lengthMenu:[10,25,50,100], responsive:true, columnDefs:[{orderable:false, targets:-1}] });
+                const dataTable = table.DataTable({ 
+                    dom: 'lrtip', 
+                    orderCellsTop:true, 
+                    fixedHeader:true, 
+                    pageLength:10, 
+                    lengthMenu:[10,25,50,100], 
+                    responsive: {
+                        details: {
+                            type: 'column',
+                            target: 'tr'
+                        }
+                    },
+                    columnDefs:[
+                        {orderable:false, targets:-1},
+                        {responsivePriority: 1, targets: 0},
+                        {responsivePriority: 2, targets: -1}
+                    ]
+                });
                 $('#branches-table thead').on('keyup change', 'tr.filters input', function(){ const idx = $(this).closest('th').index(); const val = $(this).val(); if (dataTable.column(idx).search() !== val) dataTable.column(idx).search(val).draw(); });
             } catch(e){}
         });
