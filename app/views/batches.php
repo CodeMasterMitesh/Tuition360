@@ -1,30 +1,21 @@
 <?php
+
+use CampusLite\Controllers\{BatchController, BranchController, CourseController};
+
 if (!defined('APP_INIT')) { http_response_code(403); exit('Forbidden'); }
 // app/views/batches.php
-$batches = [];
-$controllerFile = __DIR__ . '/../controllers/BatchController.php';
-if (file_exists($controllerFile)) {
-    require_once $controllerFile;
-    $cls = 'BatchController';
-    if (class_exists($cls) && method_exists($cls, 'getAll')) {
-        $batches = $cls::getAll();
-    }
-}
+$batches = BatchController::getAll();
 $search = $_GET['search'] ?? '';
 $page = isset($_GET['page']) && is_numeric($_GET['page']) ? (int)$_GET['page'] : 1;
 $totalBatches = count($batches);
 $totalPages = 1;
 // load branches and courses
-$branchFile = __DIR__ . '/../controllers/BranchController.php';
-$branches = [];
-if (file_exists($branchFile)) { require_once $branchFile; if (class_exists('BranchController') && method_exists('BranchController','getAll')) $branches = BranchController::getAll(); }
-$courseFile = __DIR__ . '/../controllers/CourseController.php';
-$courses = [];
-if (file_exists($courseFile)) { require_once $courseFile; if (class_exists('CourseController') && method_exists('CourseController','getAll')) $courses = CourseController::getAll(); }
+$branches = BranchController::getAll();
+$courses = CourseController::getAll();
 $courseMap = [];
 foreach ($courses as $c) { $courseMap[$c['id']] = $c['title'] ?? $c['name'] ?? ''; }
 ?>
-<?php include __DIR__ . '/partials/nav.php'; ?>
+
 <div class="container-fluid dashboard-container fade-in">
     <?php
     $page_icon = 'fas fa-layer-group';
@@ -232,5 +223,5 @@ foreach ($courses as $c) { $courseMap[$c['id']] = $c['title'] ?? $c['name'] ?? '
         </div>
     </div>
 </div>
-<?php include __DIR__ . '/partials/footer.php'; ?>
-<script src="../../../public/assets/js/batches.js"></script>
+
+<script src="/public/assets/js/batches.js"></script>

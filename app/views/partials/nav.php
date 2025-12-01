@@ -1,157 +1,163 @@
-<!DOCTYPE html>
-<html lang="en">
+<?php
+if (!defined('APP_INIT')) {
+    http_response_code(403);
+    exit('Forbidden');
+}
 
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard - CampusLite ERP</title>
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="stylesheet" href="../../../public/assets/css/style.css">
-    <?php if (session_status() === PHP_SESSION_ACTIVE || (isset($_SESSION) && is_array($_SESSION))): ?>
-        <meta name="csrf-token" content="<?= htmlspecialchars($_SESSION['csrf_token'] ?? '') ?>">
-        <script>
-            window.__csrfToken = '<?= htmlspecialchars($_SESSION['csrf_token'] ?? '') ?>';
-        </script>
-    <?php endif; ?>
-    <script>
-        // If a last AJAX page is stored, mark document to hide initial main content
-        // until nav-ajax replaces it. This avoids a flash of the default page on refresh.
-        try {
-            var __tuition_last = window.localStorage && window.localStorage.getItem && window.localStorage.getItem('lastPage');
-            if (__tuition_last) document.documentElement.classList.add('tuition-wait-lastpage');
-        } catch (e) {}
-    </script>
-</head>
+$activePage = $pageKey ?? 'dashboard';
+$pagesConfig = $pagesConfig ?? [];
+$currentUser = $currentUser ?? ($_SESSION['user'] ?? null);
+$userRole = strtolower($currentUser['role'] ?? ($_SESSION['role'] ?? ''));
 
-<body>
-    <nav class="navbar navbar-expand-lg navbar-dark">
-        <div class="container-fluid">
-            <a class="navbar-brand d-flex align-items-center" href="index.php?page=dashboard">
-                <img src="../../../public/assets/images/CampusLite_Erp_1.png" alt="Logo" width="70" height="70" class="me-2">
-                <span class="navbar-title">CampusLite ERP</span>
-            </a>
+$navSections = [
+    [
+        'label' => 'Dashboard',
+        'icon' => 'fa-gauge-high',
+        'page' => 'dashboard',
+        'roles' => ['super_admin', 'branch_admin', 'faculty', 'employee'],
+    ],
+    [
+        'label' => 'Resources',
+        'icon' => 'fa-users',
+        'roles' => ['super_admin', 'branch_admin', 'faculty'],
+        'children' => [
+            ['label' => 'Students', 'page' => 'students', 'icon' => 'fa-user-graduate', 'roles' => ['super_admin', 'branch_admin', 'faculty']],
+            ['label' => 'Faculty', 'page' => 'faculty', 'icon' => 'fa-chalkboard-teacher', 'roles' => ['super_admin', 'branch_admin']],
+            ['label' => 'Employees', 'page' => 'employee', 'icon' => 'fa-briefcase', 'roles' => ['super_admin', 'branch_admin']],
+        ],
+    ],
+    [
+        'label' => 'Academics',
+        'icon' => 'fa-layer-group',
+        'roles' => ['super_admin', 'branch_admin', 'faculty'],
+        'children' => [
+            ['label' => 'Subjects', 'page' => 'subjects', 'icon' => 'fa-book-open', 'roles' => ['super_admin', 'branch_admin']],
+            ['label' => 'Courses', 'page' => 'courses', 'icon' => 'fa-book', 'roles' => ['super_admin', 'branch_admin']],
+            ['label' => 'Batches', 'page' => 'batches', 'icon' => 'fa-layer-group', 'roles' => ['super_admin', 'branch_admin', 'faculty']],
+            ['label' => 'Batch Assignments', 'page' => 'batch_assignments', 'icon' => 'fa-diagram-project', 'roles' => ['super_admin', 'branch_admin']],
+        ],
+    ],
+    [
+        'label' => 'Attendance',
+        'icon' => 'fa-calendar-check',
+        'roles' => ['super_admin', 'branch_admin', 'faculty', 'employee'],
+        'children' => [
+            ['label' => 'Students', 'page' => 'attendance_students', 'icon' => 'fa-user-graduate', 'roles' => ['super_admin', 'branch_admin', 'faculty']],
+            ['label' => 'Faculty', 'page' => 'attendance_faculty', 'icon' => 'fa-chalkboard-user', 'roles' => ['super_admin', 'branch_admin']],
+            ['label' => 'Employees', 'page' => 'attendance_employee', 'icon' => 'fa-id-card-clip', 'roles' => ['super_admin', 'branch_admin', 'employee']],
+        ],
+    ],
+    [
+        'label' => 'Leaves',
+        'icon' => 'fa-umbrella-beach',
+        'page' => 'leaves',
+        'roles' => ['super_admin', 'branch_admin', 'faculty', 'employee'],
+    ],
+    [
+        'label' => 'Finance',
+        'icon' => 'fa-money-check-dollar',
+        'roles' => ['super_admin', 'branch_admin'],
+        'children' => [
+            ['label' => 'Fees', 'page' => 'fees', 'icon' => 'fa-money-bill-wave', 'roles' => ['super_admin', 'branch_admin']],
+            ['label' => 'Salaries', 'page' => 'salaries', 'icon' => 'fa-file-invoice-dollar', 'roles' => ['super_admin']],
+        ],
+    ],
+    [
+        'label' => 'Reports',
+        'icon' => 'fa-chart-bar',
+        'page' => 'reports',
+        'roles' => ['super_admin', 'branch_admin'],
+    ],
+    [
+        'label' => 'Settings',
+        'icon' => 'fa-gear',
+        'roles' => ['super_admin', 'branch_admin'],
+        'children' => [
+            ['label' => 'Settings Home', 'page' => 'settings', 'icon' => 'fa-sliders', 'roles' => ['super_admin', 'branch_admin']],
+            ['label' => 'Company', 'page' => 'company', 'icon' => 'fa-building', 'roles' => ['super_admin']],
+            ['label' => 'Branches', 'page' => 'branches', 'icon' => 'fa-code-branch', 'roles' => ['super_admin', 'branch_admin']],
+            ['label' => 'Users', 'page' => 'users', 'icon' => 'fa-users-gear', 'roles' => ['super_admin']],
+        ],
+    ],
+];
 
-            <div class="collapse navbar-collapse" id="mainNavbar">
-                <!-- top nav (replace existing list) -->
-                <ul class="navbar-nav me-auto mb-2 mb-lg-0">
-                    <li class="nav-item"><a class="nav-link active" href="index.php?page=dashboard"><i class="fas fa-tachometer-alt me-1"></i> Dashboard</a></li>
+$canAccess = function (array $roles) use ($userRole): bool {
+    if (empty($roles)) {
+        return true;
+    }
+    if (in_array('*', $roles, true)) {
+        return true;
+    }
+    if ($userRole === '') {
+        return false;
+    }
+    return in_array($userRole, $roles, true);
+};
 
-                    <!-- Resources (keep primary types visible) -->
-                    <li class="nav-item dropdown">
-                        <a class="nav-link" href="#" id="resourceMenu" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                            <i class="fas fa-users me-1"></i> Resources
-                        </a>
-                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="resourceMenu">
-                            <li><a class="dropdown-item" href="index.php?page=students"><i class="fas fa-user-graduate me-2"></i> Students</a></li>
-                            <li><a class="dropdown-item" href="index.php?page=faculty"><i class="fas fa-chalkboard-teacher me-2"></i> Faculty</a></li>
-                            <!-- employee moved to settings (see Settings page) -->
-                        </ul>
-                    </li>
-
-                    <!-- Keep high-usage direct links -->
-                    <li class="nav-item"><a class="nav-link" href="index.php?page=subjects"><i class="fas fa-book-open me-1"></i> Subjects</a></li>
-                    <li class="nav-item"><a class="nav-link" href="index.php?page=batches"><i class="fas fa-layer-group me-1"></i> Batches</a></li>
-
-                    <!-- Attendance -->
-                    <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" id="attendanceMenu" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                            <i class="fas fa-calendar-check me-1"></i> Attendance
-                        </a>
-                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="attendanceMenu">
-                            <li><a class="dropdown-item" href="index.php?page=attendance_students">Student Attendance</a></li>
-                            <li><a class="dropdown-item" href="index.php?page=attendance_faculty">Faculty Attendance</a></li>
-                            <li><a class="dropdown-item" href="index.php?page=attendance_employee">Employee Attendance</a></li>
-                            <li>
-                                <hr class="dropdown-divider">
-                            </li>
-                            <li><a class="dropdown-item" href="index.php?page=attendance_qr">QR Code Attendance</a></li>
-                        </ul>
-                    </li>
-
-                    <!-- Finance (keep Fees visible; extras to More/Settings) -->
-                    <li class="nav-item"><a class="nav-link" href="index.php?page=fees"><i class="fas fa-money-bill-wave me-1"></i> Fees</a></li>
-
-                    <li class="nav-item"><a class="nav-link" href="index.php?page=leaves"><i class="fas fa-umbrella-beach me-1"></i> Leaves</a></li>
-
-                    <!-- Reports -->
-                    <li class="nav-item"><a class="nav-link" href="index.php?page=reports"><i class="fas fa-chart-bar me-1"></i> Reports</a></li>
-
-                    <!-- More dropdown: less-frequent modules moved here -->
-                    <li class="nav-item dropdown">
-                        <a class="nav-link" href="#" id="moreMenu" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                            <i class="fas fa-ellipsis-h me-1"></i> More
-                        </a>
-                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="moreMenu">
-                            <!-- admin/configuration moved under Settings but accessible here too -->
-                            <li><a class="dropdown-item" href="index.php?page=settings"><i class="fas fa-cog me-2"></i> Settings / Admin</a></li>
-                            <li><a class="dropdown-item" href="index.php?page=company"><i class="fas fa-building me-2"></i> Company</a></li>
-                            <li><a class="dropdown-item" href="index.php?page=branches"><i class="fas fa-code-branch me-2"></i> Branches</a></li>
-                            <li><a class="dropdown-item" href="index.php?page=users"><i class="fas fa-users-cog me-2"></i> Users</a></li>
-                            <li><a class="dropdown-item" href="index.php?page=courses"><i class="fas fa-book me-2"></i> Courses</a></li>
-                            <li><a class="dropdown-item" href="index.php?page=salaries"><i class="fas fa-money-check-alt me-2"></i> Salaries</a></li>
-                            <li><a class="dropdown-item" href="index.php?page=employee"><i class="fas fa-briefcase me-2"></i> Employees</a></li>
-                            <li><a class="dropdown-item" href="index.php?page=assets"><i class="fas fa-boxes-stacked me-2"></i> Assets</a></li>
-                            <li><a class="dropdown-item" href="index.php?page=documents"><i class="fas fa-folder-open me-2"></i> Documents</a></li>
-                            <li><a class="dropdown-item" href="index.php?page=certificates"><i class="fas fa-certificate me-2"></i> Certificates</a></li>
-                            <li><a class="dropdown-item" href="index.php?page=idcards"><i class="fas fa-id-card me-2"></i> ID Cards</a></li>
-                            <li>
-                                <hr class="dropdown-divider">
-                            </li>
-                            <li><a class="dropdown-item" href="index.php?page=payments"><i class="fas fa-credit-card me-2"></i> Online Payments</a></li>
-                            <li><a class="dropdown-item" href="index.php?page=expenses"><i class="fas fa-file-invoice-dollar me-2"></i> Expenses</a></li>
-                            <li><a class="dropdown-item" href="index.php?page=import_export"><i class="fas fa-file-export me-2"></i> Import / Export</a></li>
-                            <li><a class="dropdown-item" href="index.php?page=backup"><i class="fas fa-database me-2"></i> Backup & Restore</a></li>
-                        </ul>
-                    </li>
-                </ul>
-                </ul>
-            </div>
-
-            <!-- Keep notifications and user profile outside the collapsing menu so they stay visible on small screens -->
-            <div class="navbar-right d-flex align-items-center">
-                <ul class="navbar-nav mb-2 mb-lg-0 align-items-center flex-row">
-                    <!-- Notifications -->
-                    <li class="nav-item dropdown">
-                        <a class="nav-link position-relative" href="#" id="notificationDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                            <i class="fas fa-bell"></i>
-                            <span class="notification-badge">3</span>
-                        </a>
-                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="notificationDropdown">
-                            <li>
-                                <h6 class="dropdown-header">Notifications</h6>
-                            </li>
-                            <li><a class="dropdown-item" href="#">New student registered</a></li>
-                            <li><a class="dropdown-item" href="#">Fee payment received</a></li>
-                            <li><a class="dropdown-item" href="#">Leave request pending</a></li>
-                            <li>
-                                <hr class="dropdown-divider">
-                            </li>
-                            <li><a class="dropdown-item text-center" href="#">View all</a></li>
-                        </ul>
-                    </li>
-
-                    <!-- User Profile -->
-                    <li class="nav-item dropdown user-dropdown">
-                        <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                            <img src="https://ui-avatars.com/api/?name=Admin+User&background=0D8ABC&color=fff" alt="User" width="32" height="32" class="rounded-circle me-1">
-                            <span class="d-none d-lg-inline">Admin User</span>
-                        </a>
-                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
-                            <li><a class="dropdown-item" href="#"><i class="fas fa-user me-2"></i> Profile</a></li>
-                            <li><a class="dropdown-item" href="index.php?page=settings"><i class="fas fa-cog me-2"></i> Settings</a></li>
-                            <li>
-                                <hr class="dropdown-divider">
-                            </li>
-                            <li><a class="dropdown-item" href="index.php?page=logout"><i class="fas fa-sign-out-alt me-2"></i> Logout</a></li>
-                        </ul>
-                    </li>
-                </ul>
-            </div>
-
-            <!-- Move toggler after right-side controls so layout matches design (toggler at far right) -->
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNavbar" aria-controls="mainNavbar" aria-expanded="false" aria-label="Toggle navigation">
-                <span class="navbar-toggler-icon"></span>
-            </button>
+?>
+<nav class="navbar navbar-expand-lg navbar-dark bg-primary shadow-sm">
+    <div class="container-fluid">
+        <a class="navbar-brand d-flex align-items-center" href="index.php?page=dashboard">
+            <img src="/public/assets/images/CampusLite_Erp_1.png" alt="CampusLite" width="56" height="56" class="me-2">
+            <span class="fw-semibold">CampusLite ERP</span>
+        </a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNavbar" aria-controls="mainNavbar" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+        <div class="collapse navbar-collapse" id="mainNavbar">
+            <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                <?php foreach ($navSections as $section): ?>
+                    <?php if (!$canAccess($section['roles'] ?? [])) continue; ?>
+                    <?php if (!empty($section['children'])): ?>
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle <?= in_array($activePage, array_column($section['children'], 'page'), true) ? 'active' : '' ?>" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                <?php if (!empty($section['icon'])): ?><i class="fas <?= htmlspecialchars($section['icon']) ?> me-1"></i><?php endif; ?>
+                                <?= htmlspecialchars($section['label'] ?? '') ?>
+                            </a>
+                            <ul class="dropdown-menu dropdown-menu-end shadow">
+                                <?php foreach ($section['children'] as $child): ?>
+                                    <?php if (!$canAccess($child['roles'] ?? [])) continue; ?>
+                                    <li>
+                                        <a class="dropdown-item <?= ($child['page'] ?? '') === $activePage ? 'active' : '' ?>" href="index.php?page=<?= urlencode($child['page']) ?>">
+                                            <?php if (!empty($child['icon'])): ?><i class="fas <?= htmlspecialchars($child['icon']) ?> me-2"></i><?php endif; ?>
+                                            <?= htmlspecialchars($child['label'] ?? '') ?>
+                                        </a>
+                                    </li>
+                                <?php endforeach; ?>
+                            </ul>
+                        </li>
+                    <?php else: ?>
+                        <li class="nav-item">
+                            <a class="nav-link <?= ($section['page'] ?? '') === $activePage ? 'active' : '' ?>" href="index.php?page=<?= urlencode($section['page'] ?? 'dashboard') ?>">
+                                <?php if (!empty($section['icon'])): ?><i class="fas <?= htmlspecialchars($section['icon']) ?> me-1"></i><?php endif; ?>
+                                <?= htmlspecialchars($section['label'] ?? '') ?>
+                            </a>
+                        </li>
+                    <?php endif; ?>
+                <?php endforeach; ?>
+            </ul>
+            <ul class="navbar-nav mb-2 mb-lg-0 align-items-center">
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        <img src="https://ui-avatars.com/api/?name=<?= urlencode($currentUser['name'] ?? 'User') ?>&background=0D8ABC&color=fff" alt="User" width="32" height="32" class="rounded-circle me-2">
+                        <span class="d-none d-lg-inline">
+                            <?= htmlspecialchars($currentUser['name'] ?? 'User') ?>
+                        </span>
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+                        <li><h6 class="dropdown-header mb-0"><?= htmlspecialchars(ucwords(str_replace('_', ' ', $userRole ?: ''))) ?></h6></li>
+                        <?php
+                            $settingsRoles = $pagesConfig['settings']['roles'] ?? [];
+                            $canSeeSettings = empty($settingsRoles) || ($userRole && in_array($userRole, $settingsRoles, true));
+                        ?>
+                        <?php if ($canSeeSettings): ?>
+                            <li><a class="dropdown-item" href="index.php?page=settings"><i class="fas fa-gear me-2"></i>Settings</a></li>
+                        <?php endif; ?>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item" href="index.php?page=logout"><i class="fas fa-arrow-right-from-bracket me-2"></i>Logout</a></li>
+                    </ul>
+                </li>
+            </ul>
         </div>
-    </nav>
+    </div>
+</nav>

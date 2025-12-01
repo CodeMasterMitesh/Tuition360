@@ -1,15 +1,10 @@
 <?php
+
+use CampusLite\Controllers\CompanyController;
+
 if (!defined('APP_INIT')) { http_response_code(403); exit('Forbidden'); }
 // app/views/company.php
-$company = [];
-$controllerFile = __DIR__ . '/../controllers/CompanyController.php';
-if (file_exists($controllerFile)) {
-    require_once $controllerFile;
-    $cls = 'CompanyController';
-    if (class_exists($cls) && method_exists($cls, 'getAll')) {
-        $company = $cls::getAll();
-    }
-}
+$company = CompanyController::getAll();
 $search = $_GET['search'] ?? '';
 $page = isset($_GET['page']) && is_numeric($_GET['page']) ? (int)$_GET['page'] : 1;
 $total = count($company);
@@ -17,7 +12,7 @@ $totalPages = 1;
 // pick first company record for editing
 $company_record = !empty($company) ? $company[0] : null;
 ?>
-<?php include __DIR__ . '/partials/nav.php'; ?>
+
 <div class="container-fluid dashboard-container fade-in">
     <div class="breadcrumb-container d-flex justify-content-between align-items-center">
         <nav aria-label="breadcrumb">
@@ -60,7 +55,7 @@ $company_record = !empty($company) ? $company[0] : null;
         </div>
     </div>
 </div>
-<?php include __DIR__ . '/partials/footer.php'; ?>
+
 <script>
     async function saveCompany(){ const form=document.getElementById('editCompanyForm'); const params=new FormData(form); CRUD.showLoading(); try{ const res=await CRUD.post('api/company.php?action=save', params); if(res.success){ location.reload(); } else { alert('Save failed: '+(res.message||res.error||'Unknown')); } }catch(e){ alert('Request failed: '+e.message); } finally{ CRUD.hideLoading(); } }
     document.addEventListener('DOMContentLoaded', ()=>document.querySelector('.dashboard-container').classList.add('show'));

@@ -2,6 +2,7 @@
 // api/init.php - centralized session start and auth enforcement for API endpoints
 // Mark that the application is initialized so controllers/views included by APIs allow access
 if (!defined('APP_INIT')) define('APP_INIT', true);
+require_once __DIR__ . '/../vendor/autoload.php';
 require_once __DIR__ . '/../config/session.php';
 start_secure_session();
 

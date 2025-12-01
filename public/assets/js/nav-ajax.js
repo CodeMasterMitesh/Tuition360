@@ -11,13 +11,23 @@
     }
 
     function findMainContainer(doc) {
-        // Try common selectors used by the app views
-        return doc.querySelector('.dashboard-container') || doc.querySelector('.container-fluid') || doc.querySelector('main') || doc.body;
+        // Prefer the dedicated main container introduced by the master layout
+        return doc.querySelector('main#app-main')
+            || doc.querySelector('main.app-main')
+            || doc.querySelector('main')
+            || doc.querySelector('.dashboard-container')
+            || doc.querySelector('.container-fluid')
+            || doc.body;
     }
 
     function replaceContent(newDoc) {
         const newMain = findMainContainer(newDoc);
-        const curMain = document.querySelector('.dashboard-container') || document.querySelector('.container-fluid') || document.querySelector('main') || document.body;
+        const curMain = document.querySelector('main#app-main')
+            || document.querySelector('main.app-main')
+            || document.querySelector('main')
+            || document.querySelector('.dashboard-container')
+            || document.querySelector('.container-fluid')
+            || document.body;
         if (!newMain || !curMain) return;
         // Remove scripts from the fragment before inserting into DOM to avoid
         // inline scripts executing or existing in the DOM before their

@@ -1,8 +1,11 @@
 <?php
+
+use CampusLite\Controllers\AttendanceController;
+
 // Minimal test script for Attendance controller functions
 chdir(__DIR__ . '/../');
+require_once __DIR__ . '/../vendor/autoload.php';
 require_once __DIR__ . '/../config/db.php';
-require_once __DIR__ . '/../app/controllers/AttendanceController.php';
 
 echo "Running minimal attendance tests...\n";
 

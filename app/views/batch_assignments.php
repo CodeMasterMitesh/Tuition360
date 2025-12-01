@@ -1,35 +1,20 @@
 <?php
+
+use CampusLite\Controllers\{BatchAssignmentController, BatchController, StudentController, SubjectController, UserController};
+
 if (!defined('APP_INIT')) { http_response_code(403); exit('Forbidden'); }
 // app/views/batch_assignments.php
-$assignments = [];
-$controllerFile = __DIR__ . '/../controllers/BatchAssignmentController.php';
-if (file_exists($controllerFile)) {
-    require_once $controllerFile;
-    $cls = 'BatchAssignmentController';
-    if (class_exists($cls) && method_exists($cls, 'getAll')) {
-        $assignments = $cls::getAll();
-    }
-}
-// load batches and users for selects
-$batchFile = __DIR__ . '/../controllers/BatchController.php';
-$batches = [];
-if (file_exists($batchFile)) { require_once $batchFile; if (class_exists('BatchController') && method_exists('BatchController','getAll')) $batches = BatchController::getAll(); }
-// load students and subjects for selects
-$studentFile = __DIR__ . '/../controllers/StudentController.php';
-$students = [];
-if (file_exists($studentFile)) { require_once $studentFile; if (class_exists('StudentController') && method_exists('StudentController','getAll')) $students = StudentController::getAll(); }
-$subjectFile = __DIR__ . '/../controllers/SubjectController.php';
-$subjects = [];
-if (file_exists($subjectFile)) { require_once $subjectFile; if (class_exists('SubjectController') && method_exists('SubjectController','getAll')) $subjects = SubjectController::getAll(); }
-$userFile = __DIR__ . '/../controllers/UserController.php';
-$users = [];
-if (file_exists($userFile)) { require_once $userFile; if (class_exists('UserController') && method_exists('UserController','getAll')) $users = UserController::getAll(); }
+$assignments = BatchAssignmentController::getAll();
+$batches = BatchController::getAll();
+$students = StudentController::getAll();
+$subjects = SubjectController::getAll();
+$users = UserController::getAll();
 $batchMap = []; foreach ($batches as $b) $batchMap[$b['id']] = $b['title'] ?? $b['name'] ?? ('Batch '.$b['id']);
 $userMap = []; foreach ($users as $u) $userMap[$u['id']] = $u['name'] ?? $u['email'] ?? ('User '.$u['id']);
 $studentMap = []; foreach ($students as $s) $studentMap[$s['id']] = $s['name'] ?? $s['email'] ?? ('Student '.$s['id']);
 $subjectMap = []; foreach ($subjects as $s) $subjectMap[$s['id']] = $s['title'] ?? $s['code'] ?? ('Subject '.$s['id']);
 ?>
-<?php include __DIR__ . '/partials/nav.php'; ?>
+
 <div class="container-fluid dashboard-container fade-in">
     <?php
     $page_icon = 'fas fa-tasks';
@@ -171,11 +156,11 @@ $subjectMap = []; foreach ($subjects as $s) $subjectMap[$s['id']] = $s['title'] 
     </div>
 </div>
 
-<?php include __DIR__ . '/partials/footer.php'; ?>
+
 <script>
 // inject subject map for client-side lookup
 window.__subjectMap = <?= json_encode($subjectMap ?? []) ?>;
 // inject student map for client-side lookup (id -> name)
 window.__studentMap = <?= json_encode($studentMap ?? []) ?>;
 </script>
-<script src="../../../public/assets/js/batch_assignments.js"></script>
+<script src="/public/assets/js/batch_assignments.js"></script>

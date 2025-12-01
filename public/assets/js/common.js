@@ -48,17 +48,17 @@ function showAddModal(modalId, formId, opts = {}) {
     // ensure CSRF hidden input exists in the form (for non-AJAX submissions)
     try {
         if (form) {
+            const tokenLookup = (typeof window.getCsrfToken === 'function') ? window.getCsrfToken : function(){ return (window.__csrfToken || null); };
             let csrfInput = form.querySelector('input[name="csrf_token"]');
+            const tokenValue = tokenLookup() || '';
             if (!csrfInput) {
-                const token = (document.querySelector('meta[name="csrf-token"]') && document.querySelector('meta[name="csrf-token"]').content) || window.__csrfToken || '';
                 csrfInput = document.createElement('input');
                 csrfInput.type = 'hidden';
                 csrfInput.name = 'csrf_token';
-                csrfInput.value = token;
+                csrfInput.value = tokenValue;
                 form.appendChild(csrfInput);
             } else {
-                // update value in case token rotated
-                csrfInput.value = (document.querySelector('meta[name="csrf-token"]') && document.querySelector('meta[name="csrf-token"]').content) || window.__csrfToken || csrfInput.value;
+                csrfInput.value = tokenValue || csrfInput.value;
             }
         }
     } catch(e) { /* ignore */ }
@@ -124,6 +124,12 @@ async function fetchJson(url, opts) {
     // merge headers
     opts.headers = Object.assign({}, defaultOpts.headers, opts.headers || {});
     if (!opts.credentials) opts.credentials = defaultOpts.credentials;
+    const method = (opts.method || 'GET').toUpperCase();
+    if (method !== 'GET') {
+        const tokenLookup = (typeof window.getCsrfToken === 'function') ? window.getCsrfToken : function(){ return (window.__csrfToken || null); };
+        const token = tokenLookup();
+        if (token) opts.headers['X-CSRF-Token'] = token;
+    }
 
     const res = await fetch(url, opts);
     const text = await res.text();
@@ -153,3 +159,25 @@ async function fetchJson(url, opts) {
     }
     return data;
 }
+
+// Lightweight card fade-in animation to keep UI lively after layout refactor
+document.addEventListener('DOMContentLoaded', function(){
+    try {
+        const cards = document.querySelectorAll('.card');
+        if (!cards.length || typeof IntersectionObserver === 'undefined') return;
+        const observer = new IntersectionObserver(function(entries){
+            entries.forEach(function(entry){
+                if (entry.isIntersecting) {
+                    entry.target.classList.add('card-visible');
+                    observer.unobserve(entry.target);
+                }
+            });
+        }, { threshold: 0.1 });
+        cards.forEach(function(card){
+            card.classList.add('card-prefade');
+            observer.observe(card);
+        });
+    } catch (err) {
+        console.warn('card animation init failed', err);
+    }
+});

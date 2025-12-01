@@ -1,7 +1,9 @@
 <?php
+
+use CampusLite\Controllers\BranchController;
+
 require_once __DIR__ . '/init.php';
 require_once __DIR__ . '/helpers.php';
-require_once __DIR__ . '/../app/controllers/BranchController.php';
 
 $action = $_REQUEST['action'] ?? ($_SERVER['REQUEST_METHOD']==='GET' ? 'list' : 'create');
 try {

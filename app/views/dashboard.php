@@ -1,12 +1,9 @@
 <?php
+
+use CampusLite\Controllers\{BatchController, BranchController, CourseController, FacultyController, StudentController, UserController};
+
 if (!defined('APP_INIT')) { http_response_code(403); exit('Forbidden'); }
 // app/views/dashboard.php
-require_once __DIR__ . '/../controllers/BranchController.php';
-require_once __DIR__ . '/../controllers/UserController.php';
-require_once __DIR__ . '/../controllers/CourseController.php';
-require_once __DIR__ . '/../controllers/StudentController.php';
-require_once __DIR__ . '/../controllers/FacultyController.php';
-require_once __DIR__ . '/../controllers/BatchController.php';
 
 $branches = BranchController::getAll();
 $users = UserController::getAll();
@@ -27,7 +24,7 @@ foreach ($branches as $b) {
     ];
 }
 ?>
-<?php include __DIR__ . '/partials/nav.php'; ?>
+
 <div class="dashboard-container" style="width:100%;max-width:none;">
         <!-- Dashboard header and controls removed for minimal look -->
 
@@ -642,4 +639,4 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 </script>
-<?php include __DIR__ . '/partials/footer.php'; ?>
+

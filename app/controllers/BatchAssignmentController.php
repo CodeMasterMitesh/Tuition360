@@ -1,7 +1,11 @@
 <?php
+
+namespace CampusLite\Controllers;
+
 if (!defined('APP_INIT')) { http_response_code(403); exit('Forbidden'); }
 // app/controllers/BatchAssignmentController.php
 require_once __DIR__ . '/../../config/db.php';
+
 class BatchAssignmentController {
     public static function getAll($page = 1, $perPage = 0) {
         global $conn;

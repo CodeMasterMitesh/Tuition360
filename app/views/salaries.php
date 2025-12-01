@@ -1,21 +1,16 @@
 <?php
+
+use CampusLite\Controllers\SalaryController;
+
 if (!defined('APP_INIT')) { http_response_code(403); exit('Forbidden'); }
 // app/views/salaries.php
-$salaries = [];
-$controllerFile = __DIR__ . '/../controllers/SalaryController.php';
-if (file_exists($controllerFile)) {
-    require_once $controllerFile;
-    $cls = 'SalaryController';
-    if (class_exists($cls) && method_exists($cls, 'getAll')) {
-        $salaries = $cls::getAll();
-    }
-}
+$salaries = SalaryController::getAll();
 $search = $_GET['search'] ?? '';
 $page = isset($_GET['page']) && is_numeric($_GET['page']) ? (int)$_GET['page'] : 1;
 $total = count($salaries);
 $totalPages = 1;
 ?>
-<?php include __DIR__ . '/partials/nav.php'; ?>
+
 <div class="container-fluid dashboard-container fade-in">
     <div class="breadcrumb-container d-flex justify-content-between align-items-center">
         <nav aria-label="breadcrumb">
@@ -90,7 +85,7 @@ $totalPages = 1;
         </div>
     </div>
 </div>
-<?php include __DIR__ . '/partials/footer.php'; ?>
+
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     try {

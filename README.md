@@ -20,6 +20,11 @@ A multi-branch Tuition Management Web Application that supports:
 - **Backend:** PHP (plain PHP file structure), MySQL
 - **Optional:** Composer, PHPMailer (for email), DataTables (for tabular views)
 
+### Autoloading & Namespaces
+- Composer now manages PSR-4 namespaces for backend code. Controllers live under `CampusLite\Controllers`, helpers under `CampusLite\Helpers`, and models under `CampusLite\Models`.
+- Always include `vendor/autoload.php` (already wired into `index.php`, `login.php`, and API bootstrap) before referencing these classes.
+- After adding or moving classes, run `php composer.phar dump-autoload` (or `composer dump-autoload`) to refresh the autoloader map.
+
 ---
 
 ## Key Features / Modules

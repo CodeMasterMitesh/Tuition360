@@ -1,14 +1,16 @@
 <?php
+
+use CampusLite\Controllers\BranchController;
+
 if (!defined('APP_INIT')) { http_response_code(403); exit('Forbidden'); }
 // app/views/branches.php
-require_once __DIR__ . '/../controllers/BranchController.php';
 $branches = BranchController::getAll();
 $search = $_GET['search'] ?? '';
 $page = isset($_GET['page']) && is_numeric($_GET['page']) ? (int)$_GET['page'] : 1;
 $totalBranches = count($branches);
 $totalPages = 1;
 ?>
-<?php include __DIR__ . '/partials/nav.php'; ?>
+
 <div class="container-fluid dashboard-container fade-in">
         <!-- Breadcrumbs -->
         <div class="breadcrumb-container d-flex justify-content-between align-items-center">
@@ -210,7 +212,7 @@ $totalPages = 1;
             </div>
         </div>
     </div>
-<?php include __DIR__ . '/partials/footer.php'; ?>
+
 <script>
         // search input removed — clients may use DataTables per-column filters instead
     // Smooth fade-in effect for page content

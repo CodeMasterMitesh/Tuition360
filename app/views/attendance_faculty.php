@@ -1,15 +1,10 @@
 <?php
+
+use CampusLite\Controllers\AttendanceController;
+
 if (!defined('APP_INIT')) { http_response_code(403); exit('Forbidden'); }
 // app/views/attendance_faculty.php
-$attendance = [];
-$controllerFile = __DIR__ . '/../controllers/AttendanceController.php';
-if (file_exists($controllerFile)) {
-    require_once $controllerFile;
-    $cls = 'AttendanceController';
-    if (class_exists($cls) && method_exists($cls, 'getAll')) {
-        $attendance = $cls::getAll('faculty');
-    }
-}
+$attendance = AttendanceController::getAll('faculty');
 // Load faculties and branches for the modal dropdowns
 $faculties = [];
 $branches = [];
@@ -32,7 +27,7 @@ foreach ($faculties as $f) {
     $facultyMap[$f['id']] = $f['name'];
 }
 ?>
-<?php include __DIR__ . '/partials/nav.php'; ?>
+
 <div class="container-fluid dashboard-container fade-in">
     <div class="breadcrumb-container d-flex justify-content-between align-items-center">
         <nav aria-label="breadcrumb">
@@ -186,5 +181,5 @@ foreach ($faculties as $f) {
         </div>
     </div>
 </div>
-<?php include __DIR__ . '/partials/footer.php'; ?>
+
 <script src="/public/assets/js/attendance.js"></script>

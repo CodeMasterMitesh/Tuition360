@@ -1,9 +1,9 @@
 
 <?php
+
+use CampusLite\Controllers\{BranchController, CourseController, SubjectController};
+
 if (!defined('APP_INIT')) { http_response_code(403); exit('Forbidden'); }
-require_once __DIR__ . '/../controllers/CourseController.php';
-require_once __DIR__ . '/../controllers/BranchController.php';
-require_once __DIR__ . '/../controllers/SubjectController.php';
 $courses = CourseController::getAll();
 $branches = BranchController::getAll();
 $branchMap = [];
@@ -12,7 +12,7 @@ foreach ($branches as $b) {
 }
 $subjects = SubjectController::getAll();
 ?>
-<?php include __DIR__ . '/partials/nav.php'; ?>
+
 <div class="container-fluid dashboard-container fade-in">
     <?php
     // Use shared page header partial for consistency
@@ -146,5 +146,5 @@ $subjects = SubjectController::getAll();
         </div>
     </div>
 </div>
-<?php include __DIR__ . '/partials/footer.php'; ?>
-<script src="../../../public/assets/js/courses.js"></script>
+
+<script src="/public/assets/js/courses.js"></script>

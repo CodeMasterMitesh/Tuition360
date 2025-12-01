@@ -1,28 +1,17 @@
 <?php
+
+use CampusLite\Controllers\{BranchController, EmployeeController};
+
 if (!defined('APP_INIT')) { http_response_code(403); exit('Forbidden'); }
 // app/views/employee.php
-$employees = [];
-$controllerFile = __DIR__ . '/../controllers/EmployeeController.php';
-if (file_exists($controllerFile)) {
-    require_once $controllerFile;
-    $cls = 'EmployeeController';
-    if (class_exists($cls) && method_exists($cls, 'getAll')) {
-        $employees = $cls::getAll();
-    }
-}
+$employees = EmployeeController::getAll();
 $search = $_GET['search'] ?? '';
 $page = isset($_GET['page']) && is_numeric($_GET['page']) ? (int)$_GET['page'] : 1;
 $totalEmployees = count($employees);
 $totalPages = 1;
-// load branches
-$branchFile = __DIR__ . '/../controllers/BranchController.php';
-$branches = [];
-if (file_exists($branchFile)) {
-    require_once $branchFile;
-    if (class_exists('BranchController') && method_exists('BranchController','getAll')) $branches = BranchController::getAll();
-}
+$branches = BranchController::getAll();
 ?>
-<?php include __DIR__ . '/partials/nav.php'; ?>
+
 <div class="container-fluid dashboard-container fade-in">
     <!-- Breadcrumbs -->
     <div class="breadcrumb-container d-flex justify-content-between align-items-center">
@@ -178,7 +167,7 @@ if (file_exists($branchFile)) {
         </div>
     </div>
 </div>
-<?php include __DIR__ . '/partials/footer.php'; ?>
+
 <script>
 document.addEventListener('DOMContentLoaded', function() {
     try {

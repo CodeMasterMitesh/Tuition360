@@ -1,7 +1,9 @@
 <?php
+
+use CampusLite\Controllers\SubjectController;
+
 require_once __DIR__ . '/init.php';
 require_once __DIR__ . '/helpers.php';
-require_once __DIR__ . '/../app/controllers/SubjectController.php';
 
 $action = $_REQUEST['action'] ?? ($_SERVER['REQUEST_METHOD']==='GET' ? 'list' : 'create');
 try {

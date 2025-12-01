@@ -1,7 +1,11 @@
 <?php
+
+namespace CampusLite\Controllers;
+
 if (!defined('APP_INIT')) { http_response_code(403); exit('Forbidden'); }
 // app/controllers/AttendanceController.php
 require_once __DIR__ . '/../../config/db.php';
+
 class AttendanceController {
     // $entity_type can be 'student', 'faculty', 'employee' or null for all
     public static function getAll($entity_type = null, $branch_id = null) {

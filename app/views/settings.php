@@ -1,7 +1,7 @@
 <?php
 if (!defined('APP_INIT')) { http_response_code(403); exit('Forbidden'); }
 // app/views/settings.php
-include __DIR__ . '/partials/nav.php';
+
 ?>
 <div class="container dashboard-container">
     <div class="dashboard-header">
@@ -121,4 +121,3 @@ include __DIR__ . '/partials/nav.php';
     </div>
 </div>
 
-<?php include __DIR__ . '/partials/footer.php'; ?>

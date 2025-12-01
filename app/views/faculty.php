@@ -1,34 +1,22 @@
 <?php
+
+use CampusLite\Controllers\{BranchController, FacultyController};
+
 if (!defined('APP_INIT')) { http_response_code(403); exit('Forbidden'); }
 // app/views/faculty.php
-$faculty = [];
-$controllerFile = __DIR__ . '/../controllers/FacultyController.php';
-if (file_exists($controllerFile)) {
-    require_once $controllerFile;
-    $cls = 'FacultyController';
-    if (class_exists($cls) && method_exists($cls, 'getAll')) {
-        $faculty = $cls::getAll();
-        // echo '<pre>'.print_r($faculty,true).'</pre>';
-    }
-}
+$faculty = FacultyController::getAll();
 $search = $_GET['search'] ?? '';
 $page = isset($_GET['page']) && is_numeric($_GET['page']) ? (int)$_GET['page'] : 1;
 $totalFaculty = count($faculty);
 $totalPages = 1;
-// load branches
-$branchFile = __DIR__ . '/../controllers/BranchController.php';
-$branches = [];
-if (file_exists($branchFile)) {
-    require_once $branchFile;
-    if (class_exists('BranchController') && method_exists('BranchController','getAll')) $branches = BranchController::getAll();
-}
+$branches = BranchController::getAll();
 // build branch id => name map for display
 $branchMap = [];
 foreach ($branches as $b) {
     $branchMap[intval($b['id'])] = $b['name'];
 }
 ?>
-<?php include __DIR__ . '/partials/nav.php'; ?>
+
 <div class="container-fluid dashboard-container fade-in">
     <?php
     $page_icon = 'fas fa-chalkboard-teacher';
@@ -192,6 +180,6 @@ foreach ($branches as $b) {
         </div>
     </div>
 </div>
-<?php include __DIR__ . '/partials/footer.php'; ?>
+
 <!-- faculty script loaded from public/assets/js/faculty.js -->
 <script src="/public/assets/js/faculty.js"></script>

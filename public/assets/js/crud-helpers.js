@@ -1,24 +1,34 @@
 // Shared CRUD helpers
+function resolveCsrfToken() {
+    try {
+        if (window.__csrfToken) return window.__csrfToken;
+        const meta = document.querySelector('meta[name="csrf-token"]');
+        return meta && meta.content ? meta.content : null;
+    } catch (err) {
+        return null;
+    }
+}
+window.getCsrfToken = resolveCsrfToken;
+
 window.CRUD = {
-    get: async function(url) {
-        const res = await fetch(url, { credentials: 'same-origin' });
+    get: async function(url, extraOpts = {}) {
+        const opts = Object.assign({ credentials: 'same-origin' }, extraOpts || {});
+        opts.headers = Object.assign({ 'X-Requested-With': 'XMLHttpRequest' }, opts.headers || {});
+        const res = await fetch(url, opts);
         return res.json();
     },
-    post: async function(url, body) {
-        const opts = { method: 'POST', credentials: 'same-origin' };
-        // Attach CSRF token header if available (prefer meta tag, then global var)
-        try {
-            const meta = document.querySelector('meta[name="csrf-token"]');
-            const token = (meta && meta.content) ? meta.content : (window.__csrfToken || null);
-            if (token) {
-                opts.headers = Object.assign({}, opts.headers || {}, { 'X-CSRF-Token': token });
-            }
-        } catch (e) { /* ignore */ }
+    post: async function(url, body, extraOpts = {}) {
+        const opts = Object.assign({ method: 'POST', credentials: 'same-origin' }, extraOpts || {});
+        opts.headers = Object.assign({ 'X-Requested-With': 'XMLHttpRequest' }, opts.headers || {});
+        const token = resolveCsrfToken();
+        if (token) {
+            opts.headers['X-CSRF-Token'] = token;
+        }
 
         if (body instanceof FormData || body instanceof URLSearchParams) {
             opts.body = body;
         } else {
-            opts.headers = Object.assign({}, opts.headers || {}, { 'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8' });
+            opts.headers['Content-Type'] = 'application/x-www-form-urlencoded; charset=UTF-8';
             opts.body = new URLSearchParams(body);
         }
         const res = await fetch(url, opts);

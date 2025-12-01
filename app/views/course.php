@@ -1,21 +1,16 @@
 <?php
+
+use CampusLite\Controllers\CourseController;
+
 if (!defined('APP_INIT')) { http_response_code(403); exit('Forbidden'); }
 // app/views/course.php (single-course manager)
-$courses = [];
-$controllerFile = __DIR__ . '/../controllers/CourseController.php';
-if (file_exists($controllerFile)) {
-    require_once $controllerFile;
-    $cls = 'CourseController';
-    if (class_exists($cls) && method_exists($cls, 'getAll')) {
-        $courses = $cls::getAll();
-    }
-}
+$courses = CourseController::getAll();
 $search = $_GET['search'] ?? '';
 $page = isset($_GET['page']) && is_numeric($_GET['page']) ? (int)$_GET['page'] : 1;
 $total = count($courses);
 $totalPages = 1;
 ?>
-<?php include __DIR__ . '/partials/nav.php'; ?>
+
 <div class="container-fluid dashboard-container fade-in">
     <div class="breadcrumb-container d-flex justify-content-between align-items-center">
         <nav aria-label="breadcrumb">
@@ -84,7 +79,7 @@ $totalPages = 1;
         </div>
     </div>
 </div>
-<?php include __DIR__ . '/partials/footer.php'; ?>
+
 <script>
     let searchTimeout;
     (function(){ const si = document.getElementById('searchInput'); if(!si) return; si.addEventListener('input', function(e){ clearTimeout(searchTimeout); searchTimeout=setTimeout(()=>{ const v=e.target.value.toLowerCase(); document.querySelectorAll('#courses-table tbody tr').forEach(r=>r.style.display=r.innerText.toLowerCase().includes(v)?'':'none'); },200);} ); })();

@@ -1,7 +1,9 @@
 <?php
+
+use CampusLite\Controllers\CompanyController;
+
 require_once __DIR__ . '/init.php';
 header('Content-Type: application/json');
-require_once __DIR__ . '/../app/controllers/CompanyController.php';
 
 $action = $_REQUEST['action'] ?? ($_SERVER['REQUEST_METHOD']==='GET' ? 'list' : 'save');
 try {

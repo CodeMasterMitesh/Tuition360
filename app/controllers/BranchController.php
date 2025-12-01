@@ -1,7 +1,11 @@
 <?php
+
+namespace CampusLite\Controllers;
+
 if (!defined('APP_INIT')) { http_response_code(403); exit('Forbidden'); }
 // app/controllers/BranchController.php
 require_once __DIR__ . '/../../config/db.php';
+
 class BranchController {
     public static function getAll() {
         global $conn;

@@ -1,7 +1,9 @@
 <?php
+
+use CampusLite\Controllers\CourseController;
+
 require_once __DIR__ . '/init.php';
 header('Content-Type: application/json');
-require_once __DIR__ . '/../app/controllers/CourseController.php';
 
 $action = $_REQUEST['action'] ?? ($_SERVER['REQUEST_METHOD']==='GET' ? 'list' : 'create');
 try {
