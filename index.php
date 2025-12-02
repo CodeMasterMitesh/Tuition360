@@ -66,7 +66,10 @@ if (!empty($allowedRoles) && $pageKey !== 'login' && $layoutName !== null) {
 }
 
 // Persist last visited page in session so full refresh at /index.php renders the same view
-try { $_SESSION['last_page'] = $pageKey; } catch (Exception $e) {}
+try {
+    $_SESSION['last_page'] = $pageKey;
+} catch (Exception $e) {
+}
 
 ob_start();
 $__pageConfig = $pageConfig;
@@ -85,4 +88,3 @@ if (!file_exists($layoutFile)) {
 }
 
 require $layoutFile;
-?>

@@ -101,10 +101,44 @@ $canAccess = function (array $roles) use ($userRole): bool {
             <img src="/public/assets/images/CampusLite_Erp_1.png" alt="CampusLite" width="56" height="56" class="me-2">
             <span class="fw-semibold text-dark">CampusLite ERP</span>
         </a>
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNavbar" aria-controls="mainNavbar" aria-expanded="false" aria-label="Toggle navigation">
-            <span class="navbar-toggler-icon"></span>
-        </button>
-        <div class="collapse navbar-collapse" id="mainNavbar">
+        <div class="navbar-right d-flex align-items-center ms-auto">
+            <ul class="navbar-nav flex-row align-items-center mb-0">
+                <li class="nav-item dropdown">
+                    <a class="nav-link position-relative" href="#" id="notifDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false" data-no-ajax>
+                        <i class="fas fa-bell"></i>
+                        <span class="position-absolute translate-middle badge rounded-pill bg-danger" style="font-size:0.65rem;">0</span>
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="notifDropdown" style="min-width: 260px;">
+                        <li><h6 class="dropdown-header">Notifications</h6></li>
+                        <li><span class="dropdown-item-text text-muted small">No new notifications</span></li>
+                    </ul>
+                </li>
+                <li class="nav-item dropdown">
+                    <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false" data-no-ajax>
+                        <img src="https://ui-avatars.com/api/?name=<?= urlencode($currentUser['name'] ?? 'User') ?>&background=0D8ABC&color=fff" alt="User" width="32" height="32" class="rounded-circle me-2">
+                        <span class="d-none d-lg-inline">
+                            <?= htmlspecialchars($currentUser['name'] ?? 'User') ?>
+                        </span>
+                    </a>
+                    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+                        <li><h6 class="dropdown-header mb-0"><?= htmlspecialchars(ucwords(str_replace('_', ' ', $userRole ?: ''))) ?></h6></li>
+                        <?php
+                            $settingsRoles = $pagesConfig['settings']['roles'] ?? [];
+                            $canSeeSettings = empty($settingsRoles) || ($userRole && in_array($userRole, $settingsRoles, true));
+                        ?>
+                        <?php if ($canSeeSettings): ?>
+                            <li><a class="dropdown-item" href="index.php?page=settings"><i class="fas fa-gear me-2"></i>Settings</a></li>
+                        <?php endif; ?>
+                        <li><hr class="dropdown-divider"></li>
+                        <li><a class="dropdown-item" href="index.php?page=logout"><i class="fas fa-arrow-right-from-bracket me-2"></i>Logout</a></li>
+                    </ul>
+                </li>
+            </ul>
+            <button class="navbar-toggler ms-1" type="button" data-bs-toggle="collapse" data-bs-target="#mainNavbar" aria-controls="mainNavbar" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+        </div>
+        <div class="collapse navbar-collapse mt-2 mt-lg-0" id="mainNavbar">
             <ul class="navbar-nav me-auto mb-2 mb-lg-0">
                 <?php $sectionIndex = 0; ?>
                 <?php foreach ($navSections as $section): ?>
@@ -151,28 +185,7 @@ $canAccess = function (array $roles) use ($userRole): bool {
                     <?php endif; ?>
                 <?php endforeach; ?>
             </ul>
-            <ul class="navbar-nav mb-2 mb-lg-0 align-items-center">
-                <li class="nav-item dropdown">
-                    <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                        <img src="https://ui-avatars.com/api/?name=<?= urlencode($currentUser['name'] ?? 'User') ?>&background=0D8ABC&color=fff" alt="User" width="32" height="32" class="rounded-circle me-2">
-                        <span class="d-none d-lg-inline">
-                            <?= htmlspecialchars($currentUser['name'] ?? 'User') ?>
-                        </span>
-                    </a>
-                    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
-                        <li><h6 class="dropdown-header mb-0"><?= htmlspecialchars(ucwords(str_replace('_', ' ', $userRole ?: ''))) ?></h6></li>
-                        <?php
-                            $settingsRoles = $pagesConfig['settings']['roles'] ?? [];
-                            $canSeeSettings = empty($settingsRoles) || ($userRole && in_array($userRole, $settingsRoles, true));
-                        ?>
-                        <?php if ($canSeeSettings): ?>
-                            <li><a class="dropdown-item" href="index.php?page=settings"><i class="fas fa-gear me-2"></i>Settings</a></li>
-                        <?php endif; ?>
-                        <li><hr class="dropdown-divider"></li>
-                        <li><a class="dropdown-item" href="index.php?page=logout"><i class="fas fa-arrow-right-from-bracket me-2"></i>Logout</a></li>
-                    </ul>
-                </li>
-            </ul>
+            
         </div>
     </div>
 </nav>

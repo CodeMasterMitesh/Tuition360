@@ -338,13 +338,7 @@
 }
 
 /* Ensure navbar dropdowns open directly below their toggles */
-.navbar .dropdown-menu {
-    margin-top: 0.25rem;
-    left: 0;
-    right: auto;
-    transform: none !important;
-}
-.navbar .dropdown-toggle::after { display: inline-block; }
+/* Use Bootstrap/Popper defaults for navbar dropdown positioning */
 
 @media (max-width: 991px) {
     .navbar .container-fluid {
@@ -463,11 +457,24 @@
 @media (min-width: 992px) {
     .navbar-right {
         position: absolute;
-        right: 1rem;
+        right: 0rem;
         top: 50%;
         transform: translateY(-50%);
         margin-left: 0;
         margin-right: 0;
+        z-index: 11;
+
+    }
+    .navbar-right .nav-link{
+        border-radius: 12px;
+    }
+    .navbar-right .navbar-nav .nav-item #notifDropdown{
+        padding: 0px !important;
+        height: 50px;
+    }
+    .navbar-right .navbar-nav .nav-item #notifDropdown span{
+            top: 10px !important;
+            left: 29px !important;
     }
 }
 
