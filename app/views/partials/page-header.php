@@ -9,7 +9,7 @@ $show_actions = $show_actions ?? true;
 $action_buttons = $action_buttons ?? [];
 $add_button = $add_button ?? null;
 ?>
-<div class="breadcrumb-container d-flex flex-column flex-md-row justify-content-between align-items-start align-items-md-center gap-2 gap-md-0">
+<div class="breadcrumb-container gap-2 gap-md-0">
     <nav aria-label="breadcrumb" class="flex-grow-1">
         <ol class="breadcrumb mb-0">
             <li class="breadcrumb-item"><a href="index.php?page=dashboard"><i class="fas fa-home"></i> <span class="d-none d-sm-inline">Dashboard</span></a></li>

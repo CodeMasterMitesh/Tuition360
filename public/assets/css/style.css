@@ -361,6 +361,50 @@
 }
 
 /* Notification badge - Industry standard positioning */
+/* Breadcrumb + toolbar responsive improvements */
+.breadcrumb-container { display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; flex-wrap: wrap; }
+.breadcrumb-container .breadcrumb { margin: 0; flex: 1 1 auto; min-width: 180px; }
+.action-toolbar { display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
+.action-toolbar .btn { flex: 0 0 auto; }
+@media (max-width: 576px) {
+    .breadcrumb-container { padding: 0.5rem; border-radius: 12px; background: #fff; box-shadow: 0 6px 20px rgba(15,23,42,0.06); }
+    .breadcrumb-container .breadcrumb { font-size: 0.9rem; }
+    .action-toolbar { width: 100%; justify-content: flex-start; }
+}
+
+/* DataTables wrapper resilience on mobile */
+.dataTables_wrapper .dataTables_length, .dataTables_wrapper .dataTables_filter { display: flex; align-items: center; gap: 0.5rem; }
+@media (max-width: 576px) {
+    .dataTables_wrapper .row { display: block; }
+    .dataTables_wrapper .dataTables_length, .dataTables_wrapper .dataTables_filter { width: 10%; justify-content: space-between; margin-bottom: 0.5rem; }
+    .dataTables_wrapper .dataTables_length select { max-width: 120px; }
+    .dataTables_wrapper .dataTables_filter input { width: 100%; }
+}
+
+/* Table header filters compact alignment */
+table.table.data-table thead tr.filters th { padding-top: 0.35rem; padding-bottom: 0.35rem; }
+table.table.data-table thead tr.filters input.form-control.form-control-sm { min-width: 100px; }
+@media (max-width: 576px) {
+    table.table.data-table thead tr.filters input.form-control.form-control-sm { min-width: 72px; }
+}
+/* Responsive data tables: compact spacing and mobile-friendly stacking */
+.table-compact tbody td, .table-compact thead th { padding: 0.5rem 0.5rem; }
+.table-compact .btn-table { padding: 0.15rem 0.35rem; }
+
+@media (max-width: 576px) {
+    /* Stack table rows into cards on small screens using data-label */
+    .table-compact.table.data-table thead { display: none; }
+    .table-compact.table.data-table tbody tr { display: block; margin-bottom: 0.75rem; border: 1px solid rgba(15,23,42,0.08); border-radius: 10px; padding: 0.5rem; background: #fff; box-shadow: 0 4px 12px rgba(15,23,42,0.06); }
+    .table-compact.table.data-table tbody td { display: grid; grid-template-columns: 40% 1fr; align-items: center; padding: 0.4rem 0.25rem; border: none; }
+    .table-compact.table.data-table tbody td::before { content: attr(data-label); font-weight: 600; color: #475569; padding-right: 0.5rem; }
+    .table-compact.table.data-table tbody td.text-center { justify-content: start; }
+    .table-compact.table.data-table .table-actions { display: flex; gap: 0.4rem; }
+    .table-compact.table.data-table .status-badge { display: inline-block; padding: 0.2rem 0.5rem; font-size: 0.775rem; }
+}
+
+/* DataTables responsive details co-existence: ensure our stacking only applies when inline details are not used */
+.dtr-inline .table-compact.table.data-table tbody tr { display: table-row; box-shadow: none; border: none; border-radius: 0; padding: 0; }
+.dtr-inline .table-compact.table.data-table tbody td { display: table-cell; grid-template-columns: none; }
 .notification-badge {
     position: absolute;
     top: -2px;
@@ -2127,17 +2171,23 @@ table.dataTable.dtr-inline.collapsed > tbody > tr.parent > th:first-child:before
     /* DataTables controls stack on very small screens */
     .dataTables_wrapper .dataTables_length,
     .dataTables_wrapper .dataTables_filter {
-        width: 100%;
+        width: 50%;
         text-align: left;
-        margin-bottom: 0.5rem;
+        /* margin-bottom: 0.5rem; */
     }
     
     .dataTables_wrapper .dataTables_length label,
     .dataTables_wrapper .dataTables_filter label {
         display: flex;
-        flex-direction: column;
+        flex-direction: row;
         gap: 0.25rem;
         width: 100%;
+        justify-content: flex-start;
+        align-items: center;
+    }
+    .dataTables_wrapper .dataTables_length select{
+        width: 55px !important;
+        padding: 5px !important;
     }
     
     .dataTables_wrapper .dataTables_length select,
