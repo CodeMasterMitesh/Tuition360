@@ -1,4 +1,7 @@
 <?php
+
+namespace {
+
 ini_set('display_errors', '1');
 
 // Default timezone (can be overridden via .env)
@@ -78,15 +81,27 @@ $conn = mysqli_connect($host, $dbUser, $dbpass, $db, $port);
 if ($conn) {
     // Set connection charset if supported
     @mysqli_set_charset($conn, $charset);
-    // echo "Connection Successfully";
 } else {
-    // echo "Database connection error";
+    error_log('Database connection error: ' . mysqli_connect_error());
 }
+
+$GLOBALS['conn'] = $conn;
 
 function debug($str){
     echo "<pre>";
     print_r($str);
     echo "</pre>";
 }
-mysqli_set_charset($conn, 'utf8mb4');
+
+if ($conn instanceof \mysqli) {
+    mysqli_set_charset($conn, 'utf8mb4');
+}
+
+if (!function_exists('db_conn')) {
+    function db_conn(): ?\mysqli {
+        return isset($GLOBALS['conn']) && $GLOBALS['conn'] instanceof \mysqli ? $GLOBALS['conn'] : null;
+    }
+}
+
+}
 ?>

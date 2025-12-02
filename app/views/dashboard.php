@@ -447,7 +447,7 @@ function initDashboard() {
                     center: 'title',
                     right: window.innerWidth < 768 ? 'dayGridMonth' : 'dayGridMonth,timeGridWeek,timeGridDay'
                 },
-                adaptiveHeight: true,
+                expandRows: true,
                 aspectRatio: window.innerWidth < 768 ? 1.2 : 1.5,
                 events: async function(fetchInfo, successCallback, failureCallback) {
                     try {
@@ -573,7 +573,7 @@ document.addEventListener('DOMContentLoaded', function() {
                 center: 'title',
                 right: window.innerWidth < 768 ? 'dayGridMonth' : 'dayGridMonth,timeGridWeek,timeGridDay'
             },
-            adaptiveHeight: true,
+            expandRows: true,
             aspectRatio: window.innerWidth < 768 ? 1.2 : 1.5,
             events: async function(fetchInfo, successCallback, failureCallback) {
                 // Fetch lecture counts per day (replace with your API)

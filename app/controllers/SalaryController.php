@@ -5,6 +5,9 @@ namespace CampusLite\Controllers;
 if (!defined('APP_INIT')) { http_response_code(403); exit('Forbidden'); }
 // app/controllers/SalaryController.php
 require_once __DIR__ . '/../../config/db.php';
+if (!isset($GLOBALS['conn']) || !($GLOBALS['conn'] instanceof \mysqli)) {
+    $GLOBALS['conn'] = \db_conn();
+}
 
 class SalaryController {
     public static function getAll($branch_id = null) {

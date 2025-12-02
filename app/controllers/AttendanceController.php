@@ -5,6 +5,9 @@ namespace CampusLite\Controllers;
 if (!defined('APP_INIT')) { http_response_code(403); exit('Forbidden'); }
 // app/controllers/AttendanceController.php
 require_once __DIR__ . '/../../config/db.php';
+if (!isset($GLOBALS['conn']) || !($GLOBALS['conn'] instanceof \mysqli)) {
+    $GLOBALS['conn'] = \db_conn();
+}
 
 class AttendanceController {
     // $entity_type can be 'student', 'faculty', 'employee' or null for all

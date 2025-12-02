@@ -22,7 +22,8 @@ if (file_exists($pagesFile)) {
 }
 
 $defaultPage = 'dashboard';
-$pageKey = $_GET['page'] ?? $defaultPage;
+// Prefer the last visited page from session when no explicit page is requested
+$pageKey = isset($_GET['page']) ? $_GET['page'] : (!empty($_SESSION['last_page']) ? $_SESSION['last_page'] : $defaultPage);
 
 // Basic auth guard: allow login page without active session
 $isAuthenticated = !empty($_SESSION['user']['id']) || !empty($_SESSION['user_id']) || !empty($_SESSION['udata']);
@@ -63,6 +64,9 @@ if (!empty($allowedRoles) && $pageKey !== 'login' && $layoutName !== null) {
         exit;
     }
 }
+
+// Persist last visited page in session so full refresh at /index.php renders the same view
+try { $_SESSION['last_page'] = $pageKey; } catch (Exception $e) {}
 
 ob_start();
 $__pageConfig = $pageConfig;

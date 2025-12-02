@@ -87,21 +87,20 @@
  }
 /* Enhanced Navbar Styles */
 .navbar {
-    background: rgba(255,255,255,0.06);
-    backdrop-filter: blur(6px) saturate(120%);
-    -webkit-backdrop-filter: blur(6px) saturate(120%);
-    box-shadow: 0 6px 18px rgba(11,15,30,0.06);
-   padding: 0.45rem 1rem;
-   transition: all var(--transition-speed);
-   position: fixed;
-   top: 0;
-   left: 0;
-   right: 0;
-   z-index: 1030;
-   height: var(--header-height);
-   min-height: var(--header-height);
-   max-height: var(--header-height);
-   overflow: visible;
+    background: #ffffff;
+    box-shadow: 0 12px 30px rgba(15, 23, 42, 0.08);
+    border-bottom: 1px solid rgba(15, 23, 42, 0.05);
+    padding: 0.45rem 1rem;
+    transition: all var(--transition-speed);
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 1030;
+    height: var(--header-height);
+    min-height: var(--header-height);
+    max-height: var(--header-height);
+    overflow: visible;
 }
 
  .navbar-brand {
@@ -165,6 +164,10 @@
      box-shadow: var(--soft-shadow-1), var(--soft-shadow-2);
  }
 
+.shadow-elevated {
+    box-shadow: 0 12px 30px rgba(15, 23, 42, 0.08) !important;
+}
+
  .navbar-toggler {
      border: none;
      padding: 0.25rem 0.5rem;
@@ -175,7 +178,7 @@
  }
 
  .navbar-toggler-icon {
-     background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='rgba%28255, 255, 255, 0.8%29' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e");
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 30 30'%3e%3cpath stroke='rgba%2815, 23, 42, 0.85%29' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e");
  }
 
  /* Enhanced Dashboard Styles */
@@ -239,9 +242,109 @@
     margin-left: 0.5rem; 
 }
 
+.nav-side-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 23, 42, 0.35);
+    backdrop-filter: blur(2px);
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.25s ease;
+    z-index: 1054;
+}
+.nav-side-overlay.show {
+    opacity: 1;
+    pointer-events: auto;
+}
+.nav-side-panel {
+    position: fixed;
+    top: 0;
+    right: 0;
+    height: 100vh;
+    width: min(360px, 90vw);
+    background: #ffffff;
+    box-shadow: -20px 0 40px rgba(15, 23, 42, 0.18);
+    transform: translateX(100%);
+    transition: transform 0.3s ease;
+    z-index: 1055;
+    display: flex;
+    flex-direction: column;
+    border-left: 1px solid rgba(15, 23, 42, 0.08);
+}
+.nav-side-panel.show {
+    transform: translateX(0);
+}
+.nav-side-panel-header {
+    padding: 1.25rem 1.5rem;
+    border-bottom: 1px solid rgba(15, 23, 42, 0.08);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: rgba(248, 250, 252, 0.9);
+}
+.nav-side-panel-body {
+    padding: 1.5rem;
+    overflow-y: auto;
+    flex-grow: 1;
+    background: linear-gradient(180deg, #ffffff 0%, #f8fafc 100%);
+}
+.nav-panel-section + .nav-panel-section {
+    margin-top: 1.5rem;
+}
+.nav-panel-list {
+    margin: 0;
+    padding: 0;
+}
+.nav-panel-link {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.85rem 1rem;
+    border-radius: 12px;
+    border: 1px solid rgba(15, 23, 42, 0.08);
+    color: #0f172a;
+    text-decoration: none;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    margin-bottom: 0.75rem;
+    background: #ffffff;
+}
+.nav-panel-link i {
+    color: rgba(15, 23, 42, 0.4);
+    transition: color 0.2s ease;
+}
+.nav-panel-link:hover,
+.nav-panel-link.active {
+    border-color: var(--primary-color);
+    color: var(--primary-dark);
+    box-shadow: 0 8px 20px rgba(13, 110, 253, 0.15);
+    transform: translateX(4px);
+}
+.nav-panel-link:hover i,
+.nav-panel-link.active i {
+    color: var(--primary-color);
+}
+@media (max-width: 991px) {
+    .nav-panel-link {
+        padding: 0.75rem;
+    }
+}
+
+.nav-panel-template {
+    display: none !important;
+}
 .navbar .d-flex.align-items-center { 
     margin-left: 0; 
 }
+
+/* Ensure navbar dropdowns open directly below their toggles */
+.navbar .dropdown-menu {
+    margin-top: 0.25rem;
+    left: 0;
+    right: auto;
+    transform: none !important;
+}
+.navbar .dropdown-toggle::after { display: inline-block; }
 
 @media (max-width: 991px) {
     .navbar .container-fluid {
@@ -517,7 +620,7 @@
     position: absolute !important;
     top: 100% !important;
     left: auto !important;
-    right: 0 !important;
+    /* right: 0 !important; */
     margin-top: 0.5rem !important;
     z-index: 1032 !important;
     transform: none !important;

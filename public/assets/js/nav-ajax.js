@@ -57,7 +57,7 @@
             });
         } catch (e) { console.error('nav-ajax: failed to migrate modals/offcanvas/toasts', e); }
 
-        // Remove temporary hide-class if present (prevents flash)
+        // Ensure no artificial hide-class remains
         try { document.documentElement.classList.remove('tuition-wait-lastpage'); } catch(e) {}
         // Update document title if available
         const newTitle = newDoc.querySelector('title');
@@ -178,16 +178,37 @@
         window.scrollTo(0,0);
     }
 
+    function showMainLoading() {
+        const curMain = document.querySelector('main#app-main')
+            || document.querySelector('main.app-main')
+            || document.querySelector('main')
+            || document.querySelector('.dashboard-container')
+            || document.querySelector('.container-fluid')
+            || document.body;
+        if (!curMain) return;
+        const loadingHtml = '<div class="d-flex justify-content-center align-items-center" style="min-height: 40vh;"><div class="spinner-border text-primary" role="status"><span class="visually-hidden">Loading...</span></div></div>';
+        try { curMain.innerHTML = loadingHtml; } catch(e) {}
+    }
+
     function ajaxNavigate(href) {
+        try { if (typeof window.closeNavPanel === 'function') window.closeNavPanel(); } catch(e) {}
         fetch(href, { headers: { 'X-Requested-With': 'XMLHttpRequest' } })
             .then(r => r.text())
             .then(html => {
                 const parser = new DOMParser();
                 const doc = parser.parseFromString(html, 'text/html');
                 replaceContent(doc);
-                // keep the URL as /index.php (no querystring)
-                const base = window.location.pathname.replace(/index\.php.*$/, 'index.php');
-                history.replaceState(null, '', base);
+                try { if (typeof window.initNavPanels === 'function') window.initNavPanels(); } catch(e) { console.error('initNavPanels failed', e); }
+                // Keep URL as /index.php (no query) while remembering last page
+                try {
+                    const base = window.location.pathname.replace(/index\.php.*$/, 'index.php');
+                    history.replaceState(null, '', base);
+                } catch(e) {}
+                try {
+                    const u = new URL(href, window.location.origin);
+                    const p = u.searchParams.get('page');
+                    if (p) window.localStorage.setItem('lastPage', p);
+                } catch(e) {}
                 // Save last page key (if present in href query param `page`)
                 try {
                     const u = new URL(href, window.location.origin);
@@ -227,18 +248,15 @@
 
     // On initial load, normalize the URL to index.php
     document.addEventListener('DOMContentLoaded', function(){
-        // On load, if user had a last visited page key stored, load it via AJAX
-        const last = window.localStorage.getItem('lastPage');
-        if (last) {
-            // load only if current page is login or dashboard (initial landing)
+        try { document.documentElement.classList.remove('tuition-wait-lastpage'); } catch(e) {}
+        // If landing on /index.php without query, auto-load last visited page via AJAX
+        try {
             const currentPage = (new URL(window.location.href)).searchParams.get('page');
-            if (!currentPage || currentPage === 'login' || currentPage === 'dashboard') {
+            const last = window.localStorage.getItem('lastPage');
+            if (!currentPage && last) {
+                showMainLoading();
                 ajaxNavigate('index.php?page=' + encodeURIComponent(last));
             }
-        }
-        const base = window.location.pathname.replace(/index\.php.*$/, 'index.php');
-        history.replaceState(null, '', base);
-        // Safety: if replacement did not happen (JS error or network), remove hide-class after timeout
-        setTimeout(function(){ try { document.documentElement.classList.remove('tuition-wait-lastpage'); } catch(e) {} }, 5000);
+        } catch(e) {}
     });
 })();

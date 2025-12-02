@@ -26,10 +26,6 @@ $bodyClass = 'app-page-' . preg_replace('/[^a-z0-9_-]+/i', '-', (string) $pageKe
     <link rel="stylesheet" href="/public/assets/css/style.css">
     <script>
         window.__csrfToken = '<?= htmlspecialchars($csrfToken) ?>';
-        try {
-            var persisted = window.localStorage && window.localStorage.getItem('lastPage');
-            if (persisted) document.documentElement.classList.add('tuition-wait-lastpage');
-        } catch (err) {}
     </script>
 </head>
 <body class="h-100 <?= htmlspecialchars($bodyClass) ?>">

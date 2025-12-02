@@ -95,26 +95,41 @@ $canAccess = function (array $roles) use ($userRole): bool {
 };
 
 ?>
-<nav class="navbar navbar-expand-lg navbar-dark bg-primary shadow-sm">
+<nav class="navbar navbar-expand-lg navbar-light bg-white shadow-elevated border-bottom">
     <div class="container-fluid">
         <a class="navbar-brand d-flex align-items-center" href="index.php?page=dashboard">
             <img src="/public/assets/images/CampusLite_Erp_1.png" alt="CampusLite" width="56" height="56" class="me-2">
-            <span class="fw-semibold">CampusLite ERP</span>
+            <span class="fw-semibold text-dark">CampusLite ERP</span>
         </a>
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNavbar" aria-controls="mainNavbar" aria-expanded="false" aria-label="Toggle navigation">
             <span class="navbar-toggler-icon"></span>
         </button>
         <div class="collapse navbar-collapse" id="mainNavbar">
             <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                <?php $sectionIndex = 0; ?>
                 <?php foreach ($navSections as $section): ?>
                     <?php if (!$canAccess($section['roles'] ?? [])) continue; ?>
-                    <?php if (!empty($section['children'])): ?>
+                    <?php
+                        $sectionIndex++;
+                        $hasChildren = !empty($section['children']);
+                        $panelId = null;
+                        if ($hasChildren) {
+                            $panelSlug = strtolower(preg_replace('/[^a-z0-9]+/i', '-', ($section['label'] ?? ('section-' . $sectionIndex)) . '-' . $sectionIndex));
+                            $panelId = 'nav-panel-' . $panelSlug;
+                        }
+                        $isActive = ($section['page'] ?? '') === $activePage;
+                        if ($hasChildren) {
+                            $childrenPages = array_column($section['children'], 'page');
+                            $isActive = in_array($activePage, $childrenPages, true);
+                        }
+                    ?>
+                    <?php if ($hasChildren): ?>
                         <li class="nav-item dropdown">
-                            <a class="nav-link dropdown-toggle <?= in_array($activePage, array_column($section['children'], 'page'), true) ? 'active' : '' ?>" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                            <a class="nav-link dropdown-toggle <?= $isActive ? 'active' : '' ?>" href="#" id="navDropdown<?= $sectionIndex ?>" role="button" data-bs-toggle="dropdown" data-bs-display="static" aria-expanded="false">
                                 <?php if (!empty($section['icon'])): ?><i class="fas <?= htmlspecialchars($section['icon']) ?> me-1"></i><?php endif; ?>
                                 <?= htmlspecialchars($section['label'] ?? '') ?>
                             </a>
-                            <ul class="dropdown-menu dropdown-menu-end shadow">
+                            <ul class="dropdown-menu" aria-labelledby="navDropdown<?= $sectionIndex ?>">
                                 <?php foreach ($section['children'] as $child): ?>
                                     <?php if (!$canAccess($child['roles'] ?? [])) continue; ?>
                                     <li>
@@ -128,7 +143,7 @@ $canAccess = function (array $roles) use ($userRole): bool {
                         </li>
                     <?php else: ?>
                         <li class="nav-item">
-                            <a class="nav-link <?= ($section['page'] ?? '') === $activePage ? 'active' : '' ?>" href="index.php?page=<?= urlencode($section['page'] ?? 'dashboard') ?>">
+                            <a class="nav-link <?= $isActive ? 'active' : '' ?>" href="index.php?page=<?= urlencode($section['page'] ?? 'dashboard') ?>">
                                 <?php if (!empty($section['icon'])): ?><i class="fas <?= htmlspecialchars($section['icon']) ?> me-1"></i><?php endif; ?>
                                 <?= htmlspecialchars($section['label'] ?? '') ?>
                             </a>
@@ -161,3 +176,4 @@ $canAccess = function (array $roles) use ($userRole): bool {
         </div>
     </div>
 </nav>
+<!-- Standard Bootstrap dropdowns are now used; side panel removed. -->
