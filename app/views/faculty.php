@@ -43,6 +43,10 @@ foreach ($branches as $b) {
                         <th>Email</th>
                         <th>Phone</th>
                         <th>Branch</th>
+                        <th>Gender</th>
+                        <th>Joining</th>
+                        <th>In/Out</th>
+                        <th>Docs</th>
                         <th>Status</th>
                         <th width="150" class="text-center">Actions</th>
                     </tr>
@@ -50,7 +54,7 @@ foreach ($branches as $b) {
                 <tbody id="tableBody">
                     <?php if (empty($faculty)): ?>
                         <tr>
-                            <td colspan="8">
+                            <td colspan="12">
                                 <div class="empty-state">
                                     <i class="fas fa-inbox"></i>
                                     <h4>No faculty found</h4>
@@ -70,11 +74,18 @@ foreach ($branches as $b) {
                                 <td data-label="Email"><?= htmlspecialchars($f['email'] ?? '') ?></td>
                                 <td data-label="Phone"><?= htmlspecialchars($f['mobile'] ?? ($f['phone'] ?? '')) ?></td>
                                 <td data-label="Branch"><?= htmlspecialchars($branchMap[intval($f['branch_id'] ?? 0)] ?? ($f['branch'] ?? '')) ?></td>
+                                <td data-label="Gender"><?= htmlspecialchars($f['gender'] ?? '') ?></td>
+                                <td data-label="Joining"><?= htmlspecialchars($f['joining_date'] ?? '') ?></td>
+                                <td data-label="In/Out"><?php echo htmlspecialchars(($f['in_time'] ?? '') . ' / ' . ($f['out_time'] ?? '')); ?></td>
+                                <td data-label="Docs">
+                                    <?php if (!empty($f['aadhar_card'])): ?><a href="/public/uploads/faculty/<?= htmlspecialchars($f['aadhar_card']) ?>" target="_blank" title="Aadhar"><i class="fas fa-id-card"></i></a><?php endif; ?>
+                                    <?php if (!empty($f['pan_card'])): ?><a href="/public/uploads/faculty/<?= htmlspecialchars($f['pan_card']) ?>" target="_blank" class="ms-2" title="PAN"><i class="fas fa-address-card"></i></a><?php endif; ?>
+                                    <?php if (!empty($f['passport'])): ?><a href="/public/uploads/faculty/<?= htmlspecialchars($f['passport']) ?>" target="_blank" class="ms-2" title="Passport"><i class="fas fa-passport"></i></a><?php endif; ?>
+                                </td>
                                 <td data-label="Status">
                                     <?php if (isset($f['status'])): ?>
-                                        <span class="status-badge <?= $f['status'] === 'active' ? 'status-active' : 'status-inactive' ?>">
-                                            <?= ucfirst($f['status']) ?>
-                                        </span>
+                                        <?php $isActive = ($f['status'] === 'active' || intval($f['status']) === 1); $statusLabel = $isActive ? 'Active' : 'Inactive'; ?>
+                                        <span class="status-badge <?= $isActive ? 'status-active' : 'status-inactive' ?>"><?= $statusLabel ?></span>
                                     <?php else: ?>
                                         <span class="status-badge status-inactive">N/A</span>
                                     <?php endif; ?>
@@ -143,34 +154,120 @@ foreach ($branches as $b) {
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                <form id="addFacultyForm">
+                <form id="addFacultyForm" enctype="multipart/form-data">
                     <input type="hidden" name="id" id="facultyId" value="">
-                    <div class="mb-3">
-                        <label class="form-label">Faculty Name</label>
-                        <input type="text" class="form-control" name="name" required>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label class="form-label">Faculty Name</label>
+                            <input type="text" class="form-control" name="name" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Email</label>
+                            <input type="email" class="form-control" name="email" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Password</label>
+                            <input type="password" class="form-control" name="password" placeholder="Set initial password">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Role</label>
+                            <select class="form-select" name="role" disabled>
+                                <option value="faculty" selected>Faculty</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Phone</label>
+                            <input type="tel" class="form-control" name="mobile" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Branch</label>
+                            <select class="form-select" name="branch_id" id="facultyBranch" required>
+                                <option value="0">-- Select Branch --</option>
+                                <?php foreach ($branches as $b): ?>
+                                    <option value="<?= intval($b['id']) ?>"><?= htmlspecialchars($b['name']) ?></option>
+                                <?php endforeach; ?>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Profile Photo</label>
+                            <div class="d-flex align-items-center gap-3">
+                                <img id="facultyPhotoPreview" src="" alt="Preview" style="width:64px;height:64px;object-fit:cover;border-radius:6px;display:none;">
+                                <input type="file" class="form-control" name="profile_photo" id="facultyPhotoInput" accept="image/*">
+                                <button type="button" class="btn btn-outline-danger btn-sm" id="removeFacultyPhoto" style="display:none;">Remove</button>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Birthdate</label>
+                            <input type="date" class="form-control" name="dob">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Gender</label>
+                            <select class="form-select" name="gender">
+                                <option value="">-- Select --</option>
+                                <option value="male">Male</option>
+                                <option value="female">Female</option>
+                                <option value="other">Other</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Marital Status</label>
+                            <select class="form-select" name="marital_status">
+                                <option value="">-- Select --</option>
+                                <option value="single">Single</option>
+                                <option value="married">Married</option>
+                                <option value="divorced">Divorced</option>
+                                <option value="widowed">Widowed</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Joining Date</label>
+                            <input type="date" class="form-control" name="joining_date">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Resign Date</label>
+                            <input type="date" class="form-control" name="resign_date">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">IN Time</label>
+                            <input type="time" class="form-control" name="in_time">
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">OUT Time</label>
+                            <input type="time" class="form-control" name="out_time">
+                        </div>
+                        <div class="col-12">
+                            <label class="form-label">Address</label>
+                            <input type="text" class="form-control" name="address" placeholder="Street address">
+                        </div>
+                        <div class="col-md-4"><input type="text" class="form-control" name="area" placeholder="Area"></div>
+                        <div class="col-md-4"><input type="text" class="form-control" name="city" placeholder="City"></div>
+                        <div class="col-md-4"><input type="text" class="form-control" name="pincode" placeholder="Pincode"></div>
+                        <div class="col-md-6"><input type="text" class="form-control" name="state" placeholder="State"></div>
+                        <div class="col-md-6"><input type="text" class="form-control" name="country" placeholder="Country"></div>
+                        <div class="col-md-6">
+                            <label class="form-label">Aadhar Card (Attachment)</label>
+                            <input type="file" class="form-control" name="aadhar_card" accept="image/*,application/pdf">
+                            <small id="aadharFileInfoFaculty" class="form-text text-muted" style="display:none;"></small>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">PAN Card (Attachment)</label>
+                            <input type="file" class="form-control" name="pan_card" accept="image/*,application/pdf">
+                            <small id="panFileInfoFaculty" class="form-text text-muted" style="display:none;"></small>
+                        </div>
+                        <div class="col-md-6">
+                            <label class="form-label">Passport (Attachment)</label>
+                            <input type="file" class="form-control" name="passport" accept="image/*,application/pdf">
+                            <small id="passportFileInfoFaculty" class="form-text text-muted" style="display:none;"></small>
+                        </div>
                     </div>
-                    <div class="mb-3">
-                        <label class="form-label">Email</label>
-                        <input type="email" class="form-control" name="email" required>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Phone</label>
-                        <input type="tel" class="form-control" name="mobile" required>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Password</label>
-                        <input type="password" class="form-control" name="password" placeholder="Optional: enter a password to set">
-                        <div class="form-text">Leave blank to generate or use default password.</div>
-                    </div>
-                    <div class="mb-3">
-                        <label class="form-label">Branch</label>
-                        <select class="form-control" name="branch_id" id="facultyBranch" required>
-                            <option value="0">-- Select Branch --</option>
-                            <?php foreach ($branches as $b): ?>
-                                <option value="<?= intval($b['id']) ?>"><?= htmlspecialchars($b['name']) ?></option>
-                            <?php endforeach; ?>
-                        </select>
-                    </div>
+                    <hr>
+                    <h6>Educational Details</h6>
+                    <div id="facultyEducationList" class="mb-2"></div>
+                    <button type="button" class="btn btn-sm btn-outline-primary" id="addFacultyEducationRow">Add Education</button>
+                    <hr>
+                    <h6>Employment Details</h6>
+                    <div id="facultyEmploymentList" class="mb-2"></div>
+                    <button type="button" class="btn btn-sm btn-outline-primary" id="addFacultyEmploymentRow">Add Employment</button>
                 </form>
             </div>
             <div class="modal-footer">
