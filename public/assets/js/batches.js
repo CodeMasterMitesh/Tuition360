@@ -33,19 +33,20 @@ window.initBatches = initBatches;
 if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', initBatches); else try { initBatches(); } catch(e) { console.error('initBatches immediate failed', e); }
 
 function showAddBatchModal() {
-    if (typeof showAddModal === 'function') {
-        showAddModal('addBatchModal','addBatchForm');
-    } else {
-        const form = document.getElementById('addBatchForm'); form && form.reset();
-        document.getElementById('batchId') && (document.getElementById('batchId').value = '');
-        bootstrap.Modal.getOrCreateInstance(document.getElementById('addBatchModal')).show();
+    const form = document.getElementById('addBatchForm');
+    if (form) {
+        form.reset();
+        Array.from(form.elements).forEach(el=>el.disabled=false);
     }
-    document.querySelector('#addBatchModal .modal-title') && (document.querySelector('#addBatchModal .modal-title').innerText = 'Add New Batch');
+    const bid = document.getElementById('batchId'); if (bid) bid.value = '';
+    const titleEl = document.querySelector('#addBatchModal .modal-title'); if (titleEl) titleEl.innerText = 'Add New Batch';
     const saveBtn = document.getElementById('saveBatchBtn'); if (saveBtn) { saveBtn.textContent = 'Save Batch'; saveBtn.style.display = ''; }
     // reset days checkboxes
     document.querySelectorAll('.day-checkbox').forEach(cb => cb.checked = false);
     const daysHidden = document.getElementById('daysOfWeek'); if (daysHidden) daysHidden.value = '';
     const branchSel = document.getElementById('batchBranch'); if (branchSel) branchSel.value = '0';
+    const courseSel = document.getElementById('batchCourse'); if (courseSel) courseSel.value = '0';
+    bootstrap.Modal.getOrCreateInstance(document.getElementById('addBatchModal')).show();
 }
 
 async function editBatch(id) {

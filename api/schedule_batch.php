@@ -43,7 +43,7 @@ try {
             $batchId = intval($_GET['batch_id'] ?? 0);
             require_once __DIR__ . '/../config/db.php';
             $conn = $GLOBALS['conn'];
-            $out = ['subjects'=>[], 'students'=>[], 'faculty'=>null];
+            $out = ['subjects'=>[], 'students'=>[], 'faculties'=>[], 'employees'=>[], 'primary_faculty'=>null];
             // subjects via course->course_subjects
             $sqlSub = "SELECT s.id, s.title FROM batches b JOIN course_subjects cs ON cs.course_id=b.course_id JOIN subjects s ON s.id=cs.subject_id WHERE b.id=?";
             if ($stmt = mysqli_prepare($conn, $sqlSub)) {
@@ -62,13 +62,23 @@ try {
                     while ($r = mysqli_fetch_assoc($res)) $out['students'][] = $r;
                 }
             }
-            // faculty via batch_assignments
-            $sqlFac = "SELECT u.id, u.name FROM batch_assignments ba JOIN users u ON u.id=ba.user_id WHERE ba.batch_id=? AND ba.role='faculty' LIMIT 1";
-            if ($stmt = mysqli_prepare($conn, $sqlFac)) {
+            // faculty list via batch_assignments
+            $sqlFacAll = "SELECT u.id, u.name FROM batch_assignments ba JOIN users u ON u.id=ba.user_id WHERE ba.batch_id=? AND ba.role='faculty'";
+            if ($stmt = mysqli_prepare($conn, $sqlFacAll)) {
                 mysqli_stmt_bind_param($stmt, 'i', $batchId);
                 if (mysqli_stmt_execute($stmt)) {
                     $res = mysqli_stmt_get_result($stmt);
-                    $out['faculty'] = mysqli_fetch_assoc($res) ?: null;
+                    while ($r = mysqli_fetch_assoc($res)) $out['faculties'][] = $r;
+                }
+            }
+            $out['primary_faculty'] = $out['faculties'][0] ?? null;
+            // employees list via batch_assignments
+            $sqlEmp = "SELECT u.id, u.name FROM batch_assignments ba JOIN users u ON u.id=ba.user_id WHERE ba.batch_id=? AND ba.role='employee'";
+            if ($stmt = mysqli_prepare($conn, $sqlEmp)) {
+                mysqli_stmt_bind_param($stmt, 'i', $batchId);
+                if (mysqli_stmt_execute($stmt)) {
+                    $res = mysqli_stmt_get_result($stmt);
+                    while ($r = mysqli_fetch_assoc($res)) $out['employees'][] = $r;
                 }
             }
             send_json(true, null, $out);

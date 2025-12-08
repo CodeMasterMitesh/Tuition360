@@ -13,6 +13,25 @@ $batchMap = []; foreach ($batches as $b) $batchMap[$b['id']] = $b['title'] ?? $b
 $userMap = []; foreach ($users as $u) $userMap[$u['id']] = $u['name'] ?? $u['email'] ?? ('User '.$u['id']);
 $studentMap = []; foreach ($students as $s) $studentMap[$s['id']] = $s['name'] ?? $s['email'] ?? ('Student '.$s['id']);
 $subjectMap = []; foreach ($subjects as $s) $subjectMap[$s['id']] = $s['title'] ?? $s['code'] ?? ('Subject '.$s['id']);
+
+// Build student lookup from junction table for each assignment
+// JOIN with students table to get names directly from DB
+$assignmentStudents = [];
+if (!empty($GLOBALS['conn'])) {
+    $res = mysqli_query($GLOBALS['conn'], "
+        SELECT bas.assignment_id, bas.student_id, s.name as student_name, s.email
+        FROM batch_assignment_students bas
+        LEFT JOIN students s ON s.id = bas.student_id
+        ORDER BY bas.assignment_id, bas.student_id
+    ");
+    while ($r = mysqli_fetch_assoc($res)) {
+        if (!isset($assignmentStudents[$r['assignment_id']])) $assignmentStudents[$r['assignment_id']] = [];
+        $assignmentStudents[$r['assignment_id']][] = [
+            'id' => intval($r['student_id']),
+            'name' => $r['student_name'] ?? $r['email'] ?? ('Student ' . $r['student_id'])
+        ];
+    }
+}
 ?>
 
 <div class="container-fluid dashboard-container fade-in">
@@ -35,7 +54,8 @@ $subjectMap = []; foreach ($subjects as $s) $subjectMap[$s['id']] = $s['title'] 
                         <th width="40" class="text-center"><input type="checkbox" id="select-all-assignments"></th>
                         <th width="80">ID</th>
                         <th>Batch</th>
-                        <th>User</th>
+                        <th>Students</th>
+                        <th>Faculty / Employee</th>
                         <th>Role</th>
                         <th>Assigned At</th>
                         <th width="150" class="text-center">Actions</th>
@@ -59,24 +79,39 @@ $subjectMap = []; foreach ($subjects as $s) $subjectMap[$s['id']] = $s['title'] 
                             <td class="text-center" data-label="Select"><input type="checkbox" class="row-select" data-id="<?= htmlspecialchars($a['id']) ?>"></td>
                             <td data-label="ID"><?= htmlspecialchars($a['id']) ?></td>
                             <td data-label="Batch"><?= htmlspecialchars($batchMap[$a['batch_id']] ?? ('#'.$a['batch_id'])) ?></td>
-                            <td data-label="User">
+                            <td data-label="Students">
                                 <?php
-                                    $uids = [];
-                                    if (!empty($a['students_ids'])) {
-                                        // if it's stored as JSON string in DB, try decode
-                                        if (is_string($a['students_ids'])) {
-                                            $decoded = json_decode($a['students_ids'], true);
-                                            if (is_array($decoded)) $uids = $decoded; else $uids = [$a['students_ids']];
-                                        } elseif (is_array($a['students_ids'])) $uids = $a['students_ids'];
-                                    } elseif (!empty($a['user_id'])) {
-                                        // fallback: treat user_id as a single student or faculty id
-                                        $uids = [$a['user_id']];
+                                    $role = $a['role'] ?? '';
+                                    if ($role === 'student') {
+                                        // Show students from junction table (now with direct DB names)
+                                        $students_data = $assignmentStudents[$a['id']] ?? [];
+                                        if (!empty($students_data)) {
+                                            $names = [];
+                                            foreach ($students_data as $stu) {
+                                                $names[] = htmlspecialchars($stu['name']);
+                                            }
+                                            echo implode(', ', $names);
+                                        } else {
+                                            echo '-';
+                                        }
+                                    } else {
+                                        echo '-';
                                     }
-                                    $names = [];
-                                    foreach ($uids as $uid) {
-                                        $names[] = htmlspecialchars($userMap[$uid] ?? $studentMap[$uid] ?? ('#'.$uid));
+                                ?>
+                            </td>
+                            <td data-label="Faculty / Employee">
+                                <?php
+                                    $role = $a['role'] ?? '';
+                                    if ($role === 'faculty' || $role === 'employee') {
+                                        // Show assigned faculty or employee
+                                        if (!empty($a['user_id'])) {
+                                            echo htmlspecialchars($userMap[$a['user_id']] ?? ('#'.$a['user_id']));
+                                        } else {
+                                            echo '-';
+                                        }
+                                    } else {
+                                        echo '-';
                                     }
-                                    echo implode(', ', $names);
                                 ?>
                             </td>
                             <td data-label="Role"><?= htmlspecialchars(ucfirst($a['role'] ?? '')) ?></td>
@@ -142,8 +177,8 @@ $subjectMap = []; foreach ($subjects as $s) $subjectMap[$s['id']] = $s['title'] 
                         </div>
                     </div>
                     <div class="mb-2"><label class="form-label">Subjects (from selected batch's course)</label>
-                        <select class="form-control" name="subjects[]" id="assignmentSubjects" multiple size="6"></select>
-                        <small class="text-muted">Select subjects that apply to this assignment (optional).</small>
+                        <select class="form-control" name="subjects[]" id="assignmentSubjects" multiple size="6" disabled></select>
+                        <small class="text-muted d-block mt-2"><em>Subjects are loaded for reference but not currently saved with assignments.</em></small>
                     </div>
                     
                     <div class="mb-2"><label class="form-label">Assigned At</label>

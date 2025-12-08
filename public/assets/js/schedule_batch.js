@@ -19,6 +19,20 @@
         toIds.forEach(id=>{ const el=document.getElementById(id); if(el && !el.value) el.value=val; });
     }
 
+    function normalizeTime(val){
+        if (!val) return '';
+        const m = String(val).match(/(\d{1,2}):(\d{2})/);
+        if (!m) return '';
+        const hh = m[1].padStart(2,'0');
+        const mm = m[2].padStart(2,'0');
+        return `${hh}:${mm}`;
+    }
+
+    function normalizeDate(val){
+        if (!val) return '';
+        return String(val).slice(0,10);
+    }
+
     async function loadTable(){
         try {
             const res = await CRUD.get('api/schedule_batch.php?action=list');
@@ -67,13 +81,28 @@
         const facultyIdInput = document.getElementById('scheduleFacultyId'); if (facultyIdInput) facultyIdInput.value = '';
         const subj = document.getElementById('scheduleSubjects'); if (subj) subj.innerHTML='';
         const stu = document.getElementById('scheduleStudents'); if (stu) stu.innerHTML='';
+        const facList = document.getElementById('scheduleFacultyList'); if (facList) facList.innerHTML='';
+        const empList = document.getElementById('scheduleEmployeesList'); if (empList) empList.innerHTML='';
         adjustRecurrenceUI(document.getElementById('scheduleRecurrence')?.value || 'daily');
     }
 
     async function fetchBatchMeta(batchId){
-        if (!batchId) return {subjects:[], students:[], faculty:null};
+        if (!batchId) return {subjects:[], students:[], faculties:[], employees:[], primary_faculty:null};
         const res = await CRUD.get(`api/schedule_batch.php?action=batch_meta&batch_id=${encodeURIComponent(batchId)}`);
-        return res.success ? res.data : {subjects:[], students:[], faculty:null};
+        return res.success ? res.data : {subjects:[], students:[], faculties:[], employees:[], primary_faculty:null};
+    }
+
+    function filterBatchesByBranch(branchId){
+        const batchSel = document.getElementById('scheduleBatch');
+        if (!batchSel) return;
+        Array.from(batchSel.options).forEach(opt=>{
+            if (!opt.value) { opt.hidden=false; return; }
+            const b = opt.getAttribute('data-branch') || '';
+            opt.hidden = !!branchId && b !== String(branchId);
+        });
+        if (branchId && batchSel.selectedOptions.length && batchSel.selectedOptions[0].hidden) {
+            batchSel.value = '';
+        }
     }
 
     async function onBatchChange(){
@@ -91,8 +120,20 @@
             stuSel.innerHTML = '';
             meta.students.forEach(s=>{ const opt=document.createElement('option'); opt.value=s.id; opt.textContent=s.name; stuSel.appendChild(opt); });
         }
-        const facName = meta.faculty?.name || '';
-        const facId = meta.faculty?.id || '';
+        // Populate faculty + employees display lists
+        const facList = document.getElementById('scheduleFacultyList');
+        if (facList) {
+            facList.innerHTML = '';
+            meta.faculties?.forEach(f=>{ const opt=document.createElement('option'); opt.value=f.id; opt.textContent=f.name; facList.appendChild(opt); });
+        }
+        const empList = document.getElementById('scheduleEmployeesList');
+        if (empList) {
+            empList.innerHTML = '';
+            meta.employees?.forEach(e=>{ const opt=document.createElement('option'); opt.value=e.id; opt.textContent=e.name; empList.appendChild(opt); });
+        }
+        const primary = meta.primary_faculty || meta.faculties?.[0] || null;
+        const facName = primary?.name || '';
+        const facId = primary?.id || '';
         const facInput = document.getElementById('scheduleFaculty'); if (facInput) facInput.value = facName;
         const facHidden = document.getElementById('scheduleFacultyId'); if (facHidden) facHidden.value = facId;
     }
@@ -115,14 +156,16 @@
             setVal('#scheduleBranch', d.branch_id);
             setVal('#scheduleBatch', d.batch_id);
             setVal('#scheduleRecurrence', d.recurrence);
-            setVal('#scheduleStartDate', d.start_date);
-            setVal('#scheduleEndDate', d.end_date);
-            setVal('#scheduleStartTime', d.start_time);
-            setVal('#scheduleEndTime', d.end_time);
-            setVal('#scheduleStartTimeWeekly', d.start_time);
-            setVal('#scheduleEndTimeWeekly', d.end_time);
-            setVal('#scheduleStartTimeMonthly', d.start_time);
-            setVal('#scheduleEndTimeMonthly', d.end_time);
+            setVal('#scheduleStartDate', normalizeDate(d.start_date));
+            setVal('#scheduleEndDate', normalizeDate(d.end_date));
+            const ntStart = normalizeTime(d.start_time);
+            const ntEnd = normalizeTime(d.end_time);
+            setVal('#scheduleStartTime', ntStart);
+            setVal('#scheduleEndTime', ntEnd);
+            setVal('#scheduleStartTimeWeekly', ntStart);
+            setVal('#scheduleEndTimeWeekly', ntEnd);
+            setVal('#scheduleStartTimeMonthly', ntStart);
+            setVal('#scheduleEndTimeMonthly', ntEnd);
             setVal('#scheduleDayOfWeek', d.day_of_week);
             setVal('#scheduleDayOfMonth', d.day_of_month);
             setVal('#scheduleNotes', d.notes);
@@ -205,6 +248,16 @@
         }
         const batchSel = document.getElementById('scheduleBatch');
         if (batchSel) batchSel.addEventListener('change', onBatchChange);
+        const branchSel = document.getElementById('scheduleBranch');
+        if (branchSel) branchSel.addEventListener('change', e=>{
+            filterBatchesByBranch(e.target.value);
+            // reset batch dependent fields
+            const batchSelInner = document.getElementById('scheduleBatch');
+            if (batchSelInner && batchSelInner.value) { batchSelInner.value=''; }
+            onBatchChange();
+        });
+        // apply initial filter if branch preselected
+        if (branchSel && branchSel.value) { filterBatchesByBranch(branchSel.value); }
         const addBtn = document.querySelector('[data-modal-target="addScheduleModal"], [data-bs-target="#addScheduleModal"]');
         if (addBtn) addBtn.addEventListener('click', ()=>{
             resetForm();

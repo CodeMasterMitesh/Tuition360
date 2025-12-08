@@ -25,7 +25,8 @@ foreach ($courses as $c) { $courseMap[$c['id']] = $c['title'] ?? $c['name'] ?? '
         ['label' => 'Export Excel', 'class' => 'btn-primary', 'onclick' => 'exportToExcel()', 'icon' => 'fas fa-file-excel'],
         ['id' => 'delete-selected-batches-header', 'label' => 'Delete Selected', 'class' => 'btn-danger', 'onclick' => "deleteSelectedBatches()", 'icon' => 'fas fa-trash']
     ];
-    $add_button = ['label' => 'Add New Batch', 'onclick' => "showAddModal('addBatchModal','addBatchForm')"];
+    // Use explicit handler to guarantee add-mode reset even after editing
+    $add_button = ['label' => 'Add New Batch', 'onclick' => "showAddBatchModal()"];
     include __DIR__ . '/partials/page-header.php';
     ?>
     <!-- Table Container -->

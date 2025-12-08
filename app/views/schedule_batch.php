@@ -10,10 +10,10 @@ $page_title = 'Schedule Batch';
 $add_button = ['label' => 'Add Schedule', 'modal' => 'addScheduleModal', 'form' => 'addScheduleForm'];
 $action_buttons = [];
 $show_actions = true;
-include __DIR__ . '/partials/page-header.php';
 ?>
 
 <div class="container-fluid dashboard-container fade-in">
+    <?php include __DIR__ . '/partials/page-header.php'; ?>
     <div class="advanced-table-container">
         <div class="table-responsive table-compact" id="tableContainer">
             <table class="table data-table" id="schedule-table">
@@ -62,14 +62,22 @@ include __DIR__ . '/partials/page-header.php';
                             <select class="form-select" name="batch_id" id="scheduleBatch" required>
                                 <option value="">-- Select Batch --</option>
                                 <?php foreach ($batches as $bat): ?>
-                                    <option value="<?= intval($bat['id']) ?>" data-course="<?= intval($bat['course_id'] ?? 0) ?>"><?= htmlspecialchars($bat['title'] ?? ('Batch #' . $bat['id'])) ?></option>
+                                    <option value="<?= intval($bat['id']) ?>" data-course="<?= intval($bat['course_id'] ?? 0) ?>" data-branch="<?= intval($bat['branch_id'] ?? 0) ?>"><?= htmlspecialchars($bat['title'] ?? ('Batch #' . $bat['id'])) ?></option>
                                 <?php endforeach; ?>
                             </select>
                         </div>
                         <div class="col-md-4">
-                            <label class="form-label">Faculty (from batch)</label>
+                            <label class="form-label">Primary Faculty (from batch)</label>
                             <input type="text" class="form-control" id="scheduleFaculty" name="faculty_name" readonly>
                             <input type="hidden" name="faculty_id" id="scheduleFacultyId">
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">All Faculty Assigned</label>
+                            <select class="form-select" id="scheduleFacultyList" multiple disabled></select>
+                        </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Employees Assigned</label>
+                            <select class="form-select" id="scheduleEmployeesList" multiple disabled></select>
                         </div>
                         <div class="col-md-4">
                             <label class="form-label">Recurrence</label>
