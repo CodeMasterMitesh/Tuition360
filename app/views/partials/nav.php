@@ -56,8 +56,7 @@ $navSections = [
         'roles' => ['super_admin', 'branch_admin', 'faculty', 'employee'],
         'children' => [
             ['label' => 'Students', 'page' => 'attendance_students', 'icon' => 'fa-user-graduate', 'roles' => ['super_admin', 'branch_admin', 'faculty']],
-            ['label' => 'Faculty', 'page' => 'attendance_faculty', 'icon' => 'fa-chalkboard-user', 'roles' => ['super_admin', 'branch_admin']],
-            ['label' => 'Employees', 'page' => 'attendance_employee', 'icon' => 'fa-id-card-clip', 'roles' => ['super_admin', 'branch_admin', 'employee']],
+            ['label' => 'Staff Attendance', 'page' => 'attendance_employee', 'icon' => 'fa-id-card-clip', 'roles' => ['super_admin', 'branch_admin', 'faculty', 'employee']],
         ],
     ],
     [

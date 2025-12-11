@@ -90,13 +90,13 @@ return [
         'roles' => $roles['staff'],
     ],
     'attendance_faculty' => [
-        'view' => __DIR__ . '/../app/views/attendance_faculty.php',
-        'title' => 'Faculty Attendance',
-        'roles' => $roles['admin'],
+        'view' => __DIR__ . '/../app/views/attendance_employee.php',
+        'title' => 'Attendance',
+        'roles' => $roles['all'],
     ],
     'attendance_employee' => [
         'view' => __DIR__ . '/../app/views/attendance_employee.php',
-        'title' => 'Employee Attendance',
+        'title' => 'Attendance',
         'roles' => $roles['all'],
     ],
     'fees' => [
