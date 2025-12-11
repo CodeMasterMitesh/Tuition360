@@ -102,16 +102,25 @@
                 const idEl = document.getElementById('attendanceId'); if (idEl) idEl.value = a.id || '';
                 const form = document.getElementById('addAttendanceForm');
                 if (form) {
-                    try { if (form.querySelector('[name="employee_name"]')) form.querySelector('[name="employee_name"]').value = a.employee_name || (window.CURRENT_EMPLOYEE_NAME || ''); } catch(e){}
+                    // For student attendance
+                    try { if (form.querySelector('#studentSelect')) form.querySelector('#studentSelect').value = a.entity_id || ''; } catch(e){}
+                    try { if (form.querySelector('#studentId')) form.querySelector('#studentId').value = a.entity_id || ''; } catch(e){}
                     try { if (form.querySelector('[name="date"]')) form.querySelector('[name="date"]').value = a.date || ''; } catch(e){}
                     try { if (form.querySelector('[name="status"]')) form.querySelector('[name="status"]').value = a.status || 'present'; } catch(e){}
                     try { if (form.querySelector('[name="in_time"]')) form.querySelector('[name="in_time"]').value = a.in_time || ''; } catch(e){}
                     try { if (form.querySelector('[name="out_time"]')) form.querySelector('[name="out_time"]').value = a.out_time || ''; } catch(e){}
+                    try { if (form.querySelector('[name="note"]')) form.querySelector('[name="note"]').value = a.note || ''; } catch(e){}
+                    try { if (form.querySelector('[name="branch_id"]')) form.querySelector('[name="branch_id"]').value = a.branch_id || 0; } catch(e){}
+                    
+                    // For employee/faculty attendance (backward compatibility)
+                    try { if (form.querySelector('[name="employee_name"]')) form.querySelector('[name="employee_name"]').value = a.employee_name || (window.CURRENT_EMPLOYEE_NAME || ''); } catch(e){}
                     try { if (form.querySelector('[name="entity_type"]')) form.querySelector('[name="entity_type"]').value = a.entity_type || (window.CURRENT_ENTITY_TYPE || 'employee'); } catch(e){}
                     try { if (form.querySelector('[name="entity_id"]')) form.querySelector('[name="entity_id"]').value = a.entity_id || ''; } catch(e){}
-                    try { if (form.querySelector('[name="branch_id"]')) form.querySelector('[name="branch_id"]').value = a.branch_id || 0; } catch(e){}
-                    try { if (form.querySelector('[name="note"]')) form.querySelector('[name="note"]').value = a.note || ''; } catch(e){}
                 }
+                // Update modal title
+                const titleEl = document.querySelector('#addAttendanceModal .modal-title'); 
+                if (titleEl) titleEl.innerText = 'Edit Attendance';
+                
                 // ensure fields enabled and save visible
                 if (form) Array.from(form.elements).forEach(el => el.disabled = false);
                 const saveBtn = document.querySelector('#addAttendanceModal .btn-primary'); if (saveBtn) saveBtn.style.display = '';
@@ -124,11 +133,44 @@
     }
 
     async function viewAttendance(id) {
-        await editAttendance(id);
-        const form = document.getElementById('addAttendanceForm');
-        if (form) Array.from(form.elements).forEach(el => el.disabled = true);
-        const saveBtn = document.querySelector('#addAttendanceModal .btn-primary'); if (saveBtn) saveBtn.style.display = 'none';
-        const titleEl = document.querySelector('#addAttendanceModal .modal-title'); if (titleEl) titleEl.innerText = 'View Attendance';
+        CRUD.showLoading('tableContainer');
+        try {
+            const res = await CRUD.get(`api/attendance.php?action=get&id=${encodeURIComponent(id)}`);
+            if (res && res.success && res.data) {
+                const a = res.data;
+                
+                // Check if we have a dedicated view modal
+                const viewModal = document.getElementById('viewAttendanceModal');
+                if (viewModal) {
+                    // Use dedicated view modal for students
+                    document.getElementById('viewStudentName').textContent = a.student_name || 'N/A';
+                    document.getElementById('viewBatch').textContent = a.batch_title || '-';
+                    document.getElementById('viewDate').textContent = a.date || '-';
+                    
+                    const statusEl = document.getElementById('viewStatus');
+                    const status = a.status || 'absent';
+                    const badgeClass = status === 'present' ? 'success' : (status === 'leave' ? 'warning' : 'danger');
+                    statusEl.innerHTML = `<span class="badge bg-${badgeClass}">${status.charAt(0).toUpperCase() + status.slice(1)}</span>`;
+                    
+                    document.getElementById('viewInTime').textContent = a.in_time || '-';
+                    document.getElementById('viewOutTime').textContent = a.out_time || '-';
+                    document.getElementById('viewBranch').textContent = a.branch_name || '-';
+                    document.getElementById('viewNote').textContent = a.note || '-';
+                    
+                    bootstrap.Modal.getOrCreateInstance(viewModal).show();
+                } else {
+                    // Fallback to edit modal in readonly mode
+                    await editAttendance(id);
+                    const form = document.getElementById('addAttendanceForm');
+                    if (form) Array.from(form.elements).forEach(el => el.disabled = true);
+                    const saveBtn = document.querySelector('#addAttendanceModal .btn-primary'); if (saveBtn) saveBtn.style.display = 'none';
+                    const titleEl = document.querySelector('#addAttendanceModal .modal-title'); if (titleEl) titleEl.innerText = 'View Attendance';
+                }
+            } else {
+                CRUD.toastError('Record not found');
+            }
+        } catch(e) { CRUD.toastError('Failed: ' + (e.message || e)); }
+        finally { CRUD.hideLoading(); }
     }
 
     async function deleteAttendance(id) {
@@ -146,17 +188,43 @@
     async function saveAttendance() {
         const form = document.getElementById('addAttendanceForm');
         if (!form) return;
-        // Ensure entity fields reflect the logged-in user context before submit
+        
         const params = new FormData(form);
-        params.set('entity_type', window.CURRENT_ENTITY_TYPE || params.get('entity_type') || 'employee');
-        params.set('entity_id', window.CURRENT_EMPLOYEE_ID || params.get('entity_id') || '');
+        
+        // For student attendance page
+        const studentSelect = document.getElementById('studentSelect');
+        const studentId = document.getElementById('studentId');
+        if (studentSelect && studentSelect.value) {
+            params.set('entity_id', studentSelect.value);
+            params.set('entity_type', 'student');
+        } else if (studentId && studentId.value) {
+            params.set('entity_id', studentId.value);
+            params.set('entity_type', 'student');
+        }
+        
+        // For employee/faculty attendance page (backward compatibility)
+        if (window.CURRENT_ENTITY_TYPE) {
+            params.set('entity_type', window.CURRENT_ENTITY_TYPE);
+        }
+        if (window.CURRENT_EMPLOYEE_ID) {
+            params.set('entity_id', window.CURRENT_EMPLOYEE_ID);
+        }
+        
+        // Validation
         if (!params.get('entity_type')) { CRUD.toastError('Entity type is required'); return; }
-        if (!params.get('entity_id')) { CRUD.toastError('Person is required'); return; }
+        if (!params.get('entity_id')) { CRUD.toastError('Student/Person is required'); return; }
         if (!params.get('date')) { CRUD.toastError('Date is required'); return; }
+        if (!params.get('status')) { CRUD.toastError('Status is required'); return; }
+        
         CRUD.modalLoadingStart(document.getElementById('addAttendanceModal'));
         try {
             const res = await CRUD.post('api/attendance.php?action=mark', params);
-            if (res && res.success) { const modalEl = document.getElementById('addAttendanceModal'); bootstrap.Modal.getOrCreateInstance(modalEl).hide(); CRUD.toastSuccess(res.message || 'Saved'); refreshTable(); }
+            if (res && res.success) { 
+                const modalEl = document.getElementById('addAttendanceModal'); 
+                bootstrap.Modal.getOrCreateInstance(modalEl).hide(); 
+                CRUD.toastSuccess(res.message || 'Saved'); 
+                refreshTable(); 
+            }
             else CRUD.toastError('Save failed: ' + (res.message || res.error || 'Unknown'));
         } catch(e) { CRUD.toastError('Save request failed: ' + (e.message || e)); }
         finally { CRUD.modalLoadingStop(document.getElementById('addAttendanceModal')); }
