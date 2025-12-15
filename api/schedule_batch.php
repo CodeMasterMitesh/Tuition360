@@ -24,14 +24,42 @@ try {
         case 'create':
             $data = $_POST;
             normalize_nested($data);
-            $ok = ScheduleBatchController::create($data);
-            send_json((bool)$ok, $ok ? 'Schedule created' : 'Failed to create');
+            $scheduleId = ScheduleBatchController::create($data);
+            if ($scheduleId) {
+                $studentIds = $data['student_ids'] ?? [];
+                // Only send mails when explicitly enabled to avoid request blocking
+                $mailEnabled = $_ENV['MAIL_ENABLED'] ?? 'false';
+                if (strtolower($mailEnabled) !== 'false' && $mailEnabled !== '0' && !empty($studentIds)) {
+                    try {
+                        // Load mail helper only when needed
+                        require_once __DIR__ . '/../app/helpers/schedule_mailer.php';
+                        send_schedule_batch_notifications((int)$scheduleId, is_array($studentIds) ? $studentIds : []);
+                    } catch (Exception $e) {
+                        error_log('Schedule mail error: ' . $e->getMessage());
+                    }
+                }
+            }
+            send_json((bool)$scheduleId, $scheduleId ? 'Schedule created' : 'Failed to create');
             break;
         case 'update':
             $id = intval($_POST['id'] ?? 0);
             $data = $_POST;
             normalize_nested($data);
             $ok = ScheduleBatchController::update($id, $data);
+            if ($ok && $id > 0) {
+                $studentIds = $data['student_ids'] ?? [];
+                // Only send mails when explicitly enabled to avoid request blocking
+                $mailEnabled = $_ENV['MAIL_ENABLED'] ?? 'false';
+                if (strtolower($mailEnabled) !== 'false' && $mailEnabled !== '0' && !empty($studentIds)) {
+                    try {
+                        // Load mail helper only when needed
+                        require_once __DIR__ . '/../app/helpers/schedule_mailer.php';
+                        send_schedule_batch_notifications((int)$id, is_array($studentIds) ? $studentIds : []);
+                    } catch (Exception $e) {
+                        error_log('Schedule mail (update) error: ' . $e->getMessage());
+                    }
+                }
+            }
             send_json((bool)$ok, $ok ? 'Schedule updated' : 'Failed to update');
             break;
         case 'delete':

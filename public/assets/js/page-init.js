@@ -6,8 +6,11 @@
             const table = document.querySelector('.table.data-table');
             if (!table) return;
             const id = table.id || null;
-            // Use shared initAdvancedTable helper
-            try { initAdvancedTable('#' + id); } catch(e) { console.error('initAdvancedTable failed', e); }
+            const skipInit = id === 'attendance-table' || id === 'leaves-table';
+            // Use shared initAdvancedTable helper unless attendance handles its own init
+            if (!skipInit) {
+                try { initAdvancedTable('#' + id); } catch(e) { console.error('initAdvancedTable failed', e); }
+            }
 
             // Show container
             const container = document.querySelector('.dashboard-container'); if (container) container.classList.add('show');

@@ -14,28 +14,63 @@ class AttendanceController {
     public static function getAll($entity_type = null, $branch_id = null) {
         global $conn;
         $rows = [];
-        // Use prepared statements when filters are provided
-        if ($entity_type && $branch_id) {
-            $stmt = mysqli_prepare($conn, "SELECT * FROM attendance WHERE entity_type = ? AND branch_id = ?");
-            $bid = intval($branch_id);
-            mysqli_stmt_bind_param($stmt, 'si', $entity_type, $bid);
-            if (mysqli_stmt_execute($stmt)) {
+        
+        // Build query based on entity type
+        if ($entity_type === 'student') {
+            // Join with students and batches for student attendance
+            $sql = "SELECT a.*, s.name as student_name, s.email as student_email, 
+                    b.title as batch_title, br.name as branch_name
+                    FROM attendance a 
+                    LEFT JOIN students s ON a.entity_id = s.id AND a.entity_type = 'student'
+                    LEFT JOIN enrollments e ON e.student_id = s.id AND e.status = 'active'
+                    LEFT JOIN batches b ON b.id = e.batch_id
+                    LEFT JOIN branches br ON br.id = a.branch_id
+                    WHERE a.entity_type = 'student'";
+            
+            if ($branch_id) {
+                $sql .= " AND a.branch_id = ?";
+                $stmt = mysqli_prepare($conn, $sql . " ORDER BY a.date DESC, s.name ASC");
+                $bid = intval($branch_id);
+                mysqli_stmt_bind_param($stmt, 'i', $bid);
+            } else {
+                $stmt = mysqli_prepare($conn, $sql . " ORDER BY a.date DESC, s.name ASC");
+            }
+            
+            if ($stmt && mysqli_stmt_execute($stmt)) {
                 $res = mysqli_stmt_get_result($stmt);
                 while ($r = mysqli_fetch_assoc($res)) $rows[] = $r;
             }
             return $rows;
         }
-        if ($entity_type) {
-            $stmt = mysqli_prepare($conn, "SELECT * FROM attendance WHERE entity_type = ?");
-            mysqli_stmt_bind_param($stmt, 's', $entity_type);
-            if (mysqli_stmt_execute($stmt)) {
+        
+        // For faculty/employee
+        if ($entity_type === 'faculty' || $entity_type === 'employee') {
+            $sql = "SELECT a.*, u.name as user_name, br.name as branch_name
+                    FROM attendance a 
+                    LEFT JOIN users u ON a.entity_id = u.id
+                    LEFT JOIN branches br ON br.id = a.branch_id
+                    WHERE a.entity_type = ?";
+            
+            if ($branch_id) {
+                $sql .= " AND a.branch_id = ?";
+                $stmt = mysqli_prepare($conn, $sql . " ORDER BY a.date DESC");
+                $bid = intval($branch_id);
+                mysqli_stmt_bind_param($stmt, 'si', $entity_type, $bid);
+            } else {
+                $stmt = mysqli_prepare($conn, $sql . " ORDER BY a.date DESC");
+                mysqli_stmt_bind_param($stmt, 's', $entity_type);
+            }
+            
+            if ($stmt && mysqli_stmt_execute($stmt)) {
                 $res = mysqli_stmt_get_result($stmt);
                 while ($r = mysqli_fetch_assoc($res)) $rows[] = $r;
             }
             return $rows;
         }
+        
+        // All attendance (no entity type filter)
         if ($branch_id) {
-            $stmt = mysqli_prepare($conn, "SELECT * FROM attendance WHERE branch_id = ?");
+            $stmt = mysqli_prepare($conn, "SELECT a.*, br.name as branch_name FROM attendance a LEFT JOIN branches br ON br.id = a.branch_id WHERE a.branch_id = ? ORDER BY a.date DESC");
             $bid = intval($branch_id);
             mysqli_stmt_bind_param($stmt, 'i', $bid);
             if (mysqli_stmt_execute($stmt)) {
@@ -44,7 +79,8 @@ class AttendanceController {
             }
             return $rows;
         }
-        $res = mysqli_query($conn, "SELECT * FROM attendance");
+        
+        $res = mysqli_query($conn, "SELECT a.*, br.name as branch_name FROM attendance a LEFT JOIN branches br ON br.id = a.branch_id ORDER BY a.date DESC");
         while ($r = mysqli_fetch_assoc($res)) $rows[] = $r;
         return $rows;
     }

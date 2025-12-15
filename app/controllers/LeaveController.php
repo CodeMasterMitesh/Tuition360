@@ -19,6 +19,16 @@ class LeaveController {
         while ($r = mysqli_fetch_assoc($res)) $rows[] = $r;
         return $rows;
     }
+    
+    public static function getByUserId($userId) {
+        global $conn;
+        $userId = intval($userId);
+        $sql = "SELECT * FROM leaves WHERE user_id = $userId ORDER BY applied_on DESC";
+        $res = mysqli_query($conn, $sql);
+        $rows = [];
+        while ($r = mysqli_fetch_assoc($res)) $rows[] = $r;
+        return $rows;
+    }
     public static function create($data) {
         global $conn;
         $stmt = mysqli_prepare($conn, "INSERT INTO leaves (user_id, branch_id, leave_type, from_date, to_date, reason, status) VALUES (?, ?, ?, ?, ?, ?, ?)");

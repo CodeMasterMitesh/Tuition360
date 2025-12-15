@@ -20,6 +20,31 @@ if ($action === 'mark' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     echo json_encode(['success' => $success]);
     exit;
 }
+if ($action === 'mark_students' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+    $date = $_POST['date'] ?? date('Y-m-d');
+    $branch_id = intval($_SESSION['branch_id'] ?? ($_POST['branch_id'] ?? 0));
+    $recorded_by = intval($_SESSION['user']['id'] ?? ($_POST['recorded_by'] ?? 0));
+    $records = json_decode($_POST['records'] ?? '[]', true);
+    $schedule_id = $_POST['schedule_id'] ?? null; // unused but accepted
+    $batch_id = $_POST['batch_id'] ?? null; // unused but accepted
+    if (!is_array($records) || empty($records)) {
+        echo json_encode(['success' => false, 'message' => 'No records provided']);
+        exit;
+    }
+    $stmt = mysqli_prepare($conn, "INSERT INTO attendance (branch_id, entity_type, entity_id, date, status, note, recorded_by) VALUES (?, 'student', ?, ?, ?, ?, ?)");
+    if (!$stmt) { echo json_encode(['success'=>false,'message'=>'Prepare failed']); exit; }
+    $ok = true;
+    foreach ($records as $rec) {
+        $sid = intval($rec['student_id'] ?? 0);
+        $status = $rec['status'] ?? 'present';
+        if (!in_array($status, ['present','absent','leave'], true)) $status = 'present';
+        $note = substr($rec['note'] ?? '', 0, 255);
+        mysqli_stmt_bind_param($stmt, 'iisssi', $branch_id, $sid, $date, $status, $note, $recorded_by);
+        if (!mysqli_stmt_execute($stmt)) { $ok = false; break; }
+    }
+    echo json_encode(['success' => $ok]);
+    exit;
+}
 if ($action === 'get') {
     $id = intval($_GET['id'] ?? 0);
     $row = null;
@@ -40,7 +65,8 @@ if ($action === 'delete' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     echo json_encode(['success' => (bool)$res]);
     exit;
 }
-if ($action === 'report') {
+// Legacy staff report (GET)
+if ($action === 'report' && $_SERVER['REQUEST_METHOD'] === 'GET') {
     $branch_id = $_GET['branch_id'] ?? null;
     $from = $_GET['from'] ?? null;
     $to = $_GET['to'] ?? null;
@@ -109,5 +135,151 @@ if ($action === 'calendar') {
     echo json_encode(['success'=>true,'data'=>$rows]);
     exit;
 }
+
+if ($action === 'report') {
+    // Batch-wise attendance report with date and status filters
+    $input = json_decode(file_get_contents('php://input'), true);
+    $batchId = isset($input['batch_id']) ? $input['batch_id'] : '';
+    $fromDate = $input['from_date'] ?? '';
+    $toDate = $input['to_date'] ?? '';
+    $statusFilter = $input['status_filter'] ?? 'all';
+
+    if (!$fromDate || !$toDate) {
+        echo json_encode(['success' => false, 'message' => 'Missing date range']);
+        exit;
+    }
+
+    // Get student IDs from enrollments + schedule_batches
+    $studentIds = [];
+    
+    if ($batchId === 'all' || $batchId === '') {
+        // Get all students from all batches
+        $enrollSql = "SELECT DISTINCT student_id FROM enrollments WHERE status = 'active'";
+        $enrollStmt = mysqli_prepare($conn, $enrollSql);
+        if ($enrollStmt) {
+            if (mysqli_stmt_execute($enrollStmt)) {
+                $enrollRes = mysqli_stmt_get_result($enrollStmt);
+                while ($r = mysqli_fetch_assoc($enrollRes)) {
+                    $studentIds[] = intval($r['student_id']);
+                }
+            }
+        }
+
+        // From all schedule_batches
+        $schedSql = "SELECT student_ids FROM schedule_batches WHERE status = 'active'";
+        $schedStmt = mysqli_prepare($conn, $schedSql);
+        if ($schedStmt) {
+            if (mysqli_stmt_execute($schedStmt)) {
+                $schedRes = mysqli_stmt_get_result($schedStmt);
+                while ($r = mysqli_fetch_assoc($schedRes)) {
+                    if (!empty($r['student_ids'])) {
+                        $ids = json_decode($r['student_ids'], true);
+                        if (is_array($ids)) {
+                            foreach ($ids as $sid) {
+                                $studentIds[] = intval($sid);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    } else {
+        // Specific batch
+        $batchIdInt = intval($batchId);
+        
+        // From enrollments
+        $enrollSql = "SELECT DISTINCT student_id FROM enrollments WHERE batch_id = ? AND status = 'active'";
+        $enrollStmt = mysqli_prepare($conn, $enrollSql);
+        if ($enrollStmt) {
+            mysqli_stmt_bind_param($enrollStmt, 'i', $batchIdInt);
+            if (mysqli_stmt_execute($enrollStmt)) {
+                $enrollRes = mysqli_stmt_get_result($enrollStmt);
+                while ($r = mysqli_fetch_assoc($enrollRes)) {
+                    $studentIds[] = intval($r['student_id']);
+                }
+            }
+        }
+
+        // From schedule_batches
+        $schedSql = "SELECT student_ids FROM schedule_batches WHERE batch_id = ? AND status = 'active'";
+        $schedStmt = mysqli_prepare($conn, $schedSql);
+        if ($schedStmt) {
+            mysqli_stmt_bind_param($schedStmt, 'i', $batchIdInt);
+            if (mysqli_stmt_execute($schedStmt)) {
+                $schedRes = mysqli_stmt_get_result($schedStmt);
+                while ($r = mysqli_fetch_assoc($schedRes)) {
+                    if (!empty($r['student_ids'])) {
+                        $ids = json_decode($r['student_ids'], true);
+                        if (is_array($ids)) {
+                            foreach ($ids as $sid) {
+                                $studentIds[] = intval($sid);
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
+    $studentIds = array_unique($studentIds);
+    
+    if (empty($studentIds)) {
+        echo json_encode(['success' => true, 'records' => []]);
+        exit;
+    }
+
+    // Build query for attendance records
+    $placeholders = implode(',', array_fill(0, count($studentIds), '?'));
+    $sql = "SELECT a.*, s.name as student_name, b.title as batch_title 
+            FROM attendance a 
+            LEFT JOIN students s ON a.entity_id = s.id 
+            LEFT JOIN enrollments e ON e.student_id = s.id AND e.status = 'active'
+            LEFT JOIN batches b ON b.id = e.batch_id
+            WHERE a.entity_type = 'student' 
+            AND a.entity_id IN ($placeholders) 
+            AND a.date >= ? 
+            AND a.date <= ?";
+    
+    // Apply status filter
+    if ($statusFilter !== 'all') {
+        $sql .= " AND a.status = ?";
+    }
+    
+    $sql .= " ORDER BY a.date DESC, s.name ASC";
+
+    $stmt = mysqli_prepare($conn, $sql);
+    if ($stmt) {
+        $types = str_repeat('i', count($studentIds)) . 'ss';
+        $params = array_merge($studentIds, [$fromDate, $toDate]);
+        
+        if ($statusFilter !== 'all') {
+            $types .= 's';
+            $params[] = $statusFilter;
+        }
+
+        // Bind parameters dynamically
+        $bindParams = array_merge([$types], $params);
+        $refs = [];
+        foreach ($bindParams as $k => $v) {
+            $refs[$k] = &$bindParams[$k];
+        }
+        array_unshift($refs, $stmt);
+        call_user_func_array('mysqli_stmt_bind_param', $refs);
+
+        if (mysqli_stmt_execute($stmt)) {
+            $result = mysqli_stmt_get_result($stmt);
+            $records = [];
+            while ($row = mysqli_fetch_assoc($result)) {
+                $records[] = $row;
+            }
+            echo json_encode(['success' => true, 'records' => $records]);
+            exit;
+        }
+    }
+
+    echo json_encode(['success' => false, 'message' => 'Database query failed']);
+    exit;
+}
+
 echo json_encode(['success' => false, 'message' => 'Invalid action']);
 ?>

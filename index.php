@@ -22,8 +22,22 @@ if (file_exists($pagesFile)) {
 }
 
 $defaultPage = 'dashboard';
-// Prefer the last visited page from session when no explicit page is requested
-$pageKey = isset($_GET['page']) ? $_GET['page'] : (!empty($_SESSION['last_page']) ? $_SESSION['last_page'] : $defaultPage);
+// Check user type and route to appropriate dashboard
+$userType = $_SESSION['user_type'] ?? 'admin';
+if ($userType === 'student') {
+    $defaultPage = 'dashboard_student';
+} elseif ($userType === 'employee_faculty') {
+    $defaultPage = 'dashboard_employee';
+}
+
+// For GET requests with explicit page, use that
+// Otherwise determine page based on last_page or user type
+if (isset($_GET['page'])) {
+    $pageKey = $_GET['page'];
+} else {
+    // Use last_page if available (set by auth after login), otherwise use default for user type
+    $pageKey = $_SESSION['last_page'] ?? $defaultPage;
+}
 
 // Basic auth guard: allow login page without active session
 $isAuthenticated = !empty($_SESSION['user']['id']) || !empty($_SESSION['user_id']) || !empty($_SESSION['udata']);
@@ -59,6 +73,8 @@ $userRole = strtolower($currentUser['role'] ?? ($_SESSION['role'] ?? ''));
 $allowedRoles = $pageConfig['roles'] ?? [];
 if (!empty($allowedRoles) && $pageKey !== 'login' && $layoutName !== null) {
     if ($userRole === '' || !in_array($userRole, $allowedRoles, true)) {
+        // Debug log to trace role mismatch issues
+        error_log('PERMISSION_DENIED page=' . $pageKey . ' role=' . $userRole . ' allowed=' . json_encode($allowedRoles) . ' session=' . json_encode($_SESSION));
         http_response_code(403);
         echo 'You do not have permission to view this page.';
         exit;

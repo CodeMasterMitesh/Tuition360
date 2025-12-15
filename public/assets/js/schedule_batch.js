@@ -37,8 +37,15 @@
         try {
             const res = await CRUD.get('api/schedule_batch.php?action=list');
             if (!res.success) return;
-            const tbody = document.querySelector(tableSelector+' tbody');
+            const table = document.querySelector(tableSelector);
+            const tbody = table ? table.querySelector('tbody') : null;
             if (!tbody) return;
+            
+            // Destroy existing DataTable if it exists
+            if ($.fn.DataTable && $.fn.DataTable.isDataTable(tableSelector)) {
+                $(tableSelector).DataTable().destroy();
+            }
+            
             tbody.innerHTML = '';
             res.data.forEach(row => {
                 const tr = document.createElement('tr');
@@ -69,7 +76,15 @@
                     </td>`;
                 tbody.appendChild(tr);
             });
-            try { initAdvancedTable(tableSelector); } catch(e){}
+            
+            // Reinitialize DataTable
+            try { 
+                if (typeof initAdvancedTable === 'function') {
+                    initAdvancedTable(tableSelector); 
+                }
+            } catch(e){ 
+                console.error('DataTable init error:', e); 
+            }
         } catch(err){ console.error('loadTable failed', err); }
     }
 
@@ -269,7 +284,11 @@
             
             const form = document.getElementById(formId);
             Array.from(form.elements).forEach(el=> el.disabled = !!viewOnly);
-            const saveBtn = document.getElementById('saveScheduleBtn'); if (saveBtn) saveBtn.style.display = viewOnly ? 'none' : '';
+            const saveBtn = document.getElementById('saveScheduleBtn');
+            if (saveBtn) {
+                saveBtn.style.display = viewOnly ? 'none' : '';
+                if (!viewOnly) saveBtn.textContent = 'Update Schedule';
+            }
             const title = document.getElementById('scheduleModalTitle'); if (title) title.textContent = viewOnly ? 'View Schedule' : 'Edit Schedule';
             bootstrap.Modal.getOrCreateInstance(document.getElementById(modalId)).show();
         }catch(err){ CRUD.toastError && CRUD.toastError('Failed: '+err.message); }
@@ -308,12 +327,21 @@
         
         const id = formData.get('id');
         const action = id ? 'update' : 'create';
-        const res = await fetch('api/schedule_batch.php?action='+action, { method:'POST', body: formData });
+        // Attach CSRF token
+        const csrfToken = (typeof window.getCsrfToken === 'function') ? window.getCsrfToken() : (window.__csrfToken || null);
+        if (csrfToken && !formData.get('csrf_token')) formData.set('csrf_token', csrfToken);
+
+        const res = await fetch('api/schedule_batch.php?action='+action, {
+            method:'POST',
+            credentials:'same-origin',
+            headers: Object.assign({'X-Requested-With':'XMLHttpRequest'}, csrfToken ? {'X-CSRF-Token': csrfToken} : {}),
+            body: formData
+        });
         const data = await res.json();
         if (data.success){
-            bootstrap.Modal.getOrCreateInstance(document.getElementById(modalId)).hide();
             CRUD.toastSuccess && CRUD.toastSuccess(data.message || 'Saved');
-            loadTable();
+            await loadTable();
+            bootstrap.Modal.getOrCreateInstance(document.getElementById(modalId)).hide();
         } else {
             CRUD.toastError && CRUD.toastError(data.message || 'Save failed');
         }
@@ -323,7 +351,10 @@
         if (!confirm('Delete schedule '+id+'?')) return;
         const params = new URLSearchParams(); params.append('id', id);
         const res = await CRUD.post('api/schedule_batch.php?action=delete', params);
-        if (res.success){ CRUD.toastSuccess && CRUD.toastSuccess('Deleted'); loadTable(); }
+        if (res.success){ 
+            CRUD.toastSuccess && CRUD.toastSuccess('Deleted'); 
+            await loadTable(); 
+        }
         else { CRUD.toastError && CRUD.toastError(res.message || 'Delete failed'); }
     }
 

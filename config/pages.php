@@ -17,7 +17,17 @@ return [
     'dashboard' => [
         'view' => __DIR__ . '/../app/views/dashboard.php',
         'title' => 'Dashboard',
-        'roles' => $roles['all'],
+        'roles' => $roles['admin'],
+    ],
+    'dashboard_employee' => [
+        'view' => __DIR__ . '/../app/views/dashboard_employee.php',
+        'title' => 'Dashboard',
+        'roles' => ['faculty', 'employee'],
+    ],
+    'dashboard_student' => [
+        'view' => __DIR__ . '/../app/views/dashboard_student.php',
+        'title' => 'Dashboard',
+        'roles' => ['student'],
     ],
     'branches' => [
         'view' => __DIR__ . '/../app/views/branches.php',
@@ -80,13 +90,13 @@ return [
         'roles' => $roles['staff'],
     ],
     'attendance_faculty' => [
-        'view' => __DIR__ . '/../app/views/attendance_faculty.php',
-        'title' => 'Faculty Attendance',
-        'roles' => $roles['admin'],
+        'view' => __DIR__ . '/../app/views/attendance_employee.php',
+        'title' => 'Attendance',
+        'roles' => $roles['all'],
     ],
     'attendance_employee' => [
         'view' => __DIR__ . '/../app/views/attendance_employee.php',
-        'title' => 'Employee Attendance',
+        'title' => 'Attendance',
         'roles' => $roles['all'],
     ],
     'fees' => [

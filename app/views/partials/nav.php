@@ -8,6 +8,18 @@ $activePage = $pageKey ?? 'dashboard';
 $pagesConfig = $pagesConfig ?? [];
 $currentUser = $currentUser ?? ($_SESSION['user'] ?? null);
 $userRole = strtolower($currentUser['role'] ?? ($_SESSION['role'] ?? ''));
+$userType = $_SESSION['user_type'] ?? 'admin';
+
+// Hide menu for non-admin users
+$showMenu = ($userType === 'admin');
+
+// Compute the correct home page per role so non-admins avoid the admin dashboard
+$homePage = 'dashboard';
+if ($userType === 'employee_faculty') {
+    $homePage = 'dashboard_employee';
+} elseif ($userType === 'student') {
+    $homePage = 'dashboard_student';
+}
 
 $navSections = [
     [
@@ -44,8 +56,7 @@ $navSections = [
         'roles' => ['super_admin', 'branch_admin', 'faculty', 'employee'],
         'children' => [
             ['label' => 'Students', 'page' => 'attendance_students', 'icon' => 'fa-user-graduate', 'roles' => ['super_admin', 'branch_admin', 'faculty']],
-            ['label' => 'Faculty', 'page' => 'attendance_faculty', 'icon' => 'fa-chalkboard-user', 'roles' => ['super_admin', 'branch_admin']],
-            ['label' => 'Employees', 'page' => 'attendance_employee', 'icon' => 'fa-id-card-clip', 'roles' => ['super_admin', 'branch_admin', 'employee']],
+            ['label' => 'Staff Attendance', 'page' => 'attendance_employee', 'icon' => 'fa-id-card-clip', 'roles' => ['super_admin', 'branch_admin', 'faculty', 'employee']],
         ],
     ],
     [
@@ -87,7 +98,7 @@ $canAccess = function (array $roles) use ($userRole): bool {
 ?>
 <nav class="navbar navbar-expand-lg navbar-light bg-white shadow-elevated border-bottom">
     <div class="container-fluid">
-        <a class="navbar-brand d-flex align-items-center" href="index.php?page=dashboard">
+        <a class="navbar-brand d-flex align-items-center" href="index.php?page=<?= urlencode($homePage) ?>">
             <img src="/public/assets/images/CampusLite_Erp_1.png" alt="CampusLite" width="56" height="56" class="me-2">
             <span class="fw-semibold text-dark">CampusLite ERP</span>
         </a>
@@ -128,6 +139,7 @@ $canAccess = function (array $roles) use ($userRole): bool {
                 <span class="navbar-toggler-icon"></span>
             </button>
         </div>
+        <?php if ($showMenu): ?>
         <div class="collapse navbar-collapse mt-2 mt-lg-0" id="mainNavbar">
             <ul class="navbar-nav me-auto mb-2 mb-lg-0">
                 <?php $sectionIndex = 0; ?>
@@ -177,6 +189,7 @@ $canAccess = function (array $roles) use ($userRole): bool {
             </ul>
             
         </div>
+        <?php endif; ?>
     </div>
 </nav>
 <!-- Standard Bootstrap dropdowns are now used; side panel removed. -->

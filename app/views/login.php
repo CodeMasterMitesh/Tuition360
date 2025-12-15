@@ -24,6 +24,15 @@ if (!defined('APP_INIT')) { http_response_code(403); exit('Forbidden'); }
                     <h5 class="card-title text-center mb-3">Sign in to your account</h5>
                     <form id="loginForm" method="post" action="/api/auth.php?action=login">
                         <div class="mb-3">
+                            <label for="role" class="form-label">Login As</label>
+                            <select class="form-select" id="role" name="role" required>
+                                <option value="">-- Select Role --</option>
+                                <option value="admin">Admin</option>
+                                <option value="employee_faculty">Employee/Faculty</option>
+                                <option value="student">Student</option>
+                            </select>
+                        </div>
+                        <div class="mb-3">
                             <label for="email" class="form-label">Email</label>
                             <input type="email" class="form-control" id="email" name="email" required>
                         </div>
@@ -54,10 +63,8 @@ document.addEventListener('DOMContentLoaded', function(){
             headers: { 'X-Requested-With': 'XMLHttpRequest' }
         }).then(r => r.json()).then(json => {
             if (json && json.status) {
-                // Save last page to load after redirect (AJAX loader will handle it)
-                try { window.localStorage.setItem('lastPage', 'dashboard'); } catch(e){}
-                // Redirect to index.php (AJAX loader will load dashboard content and URL will remain index.php)
-                window.location.href = 'index.php';
+                // Redirect to index.php - session will determine which page to load
+                window.location.href = json.redirect || 'index.php';
             } else {
                 const msg = (json && json.message) ? json.message : 'Login failed';
                 alert(msg);

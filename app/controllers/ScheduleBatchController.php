@@ -27,10 +27,25 @@ class ScheduleBatchController {
     public static function get($id) {
         global $conn;
         $id = intval($id);
-        $sql = "SELECT sb.*, b.title AS batch_title, b.course_id, b.branch_id AS batch_branch_id,
+        $sql = "SELECT sb.*, 
+                COALESCE(b.title, 'N/A') AS batch_title, 
+                b.course_id, 
+                b.branch_id AS batch_branch_id,
                 (SELECT name FROM users u JOIN batch_assignments ba ON ba.user_id=u.id AND ba.role='faculty' WHERE ba.batch_id=sb.batch_id LIMIT 1) AS faculty_name
-                FROM schedule_batches sb JOIN batches b ON b.id = sb.batch_id WHERE sb.id = $id LIMIT 1";
-        if ($res = mysqli_query($conn, $sql)) return mysqli_fetch_assoc($res) ?: null;
+                FROM schedule_batches sb 
+                LEFT JOIN batches b ON b.id = sb.batch_id 
+                WHERE sb.id = ? LIMIT 1";
+        if ($stmt = mysqli_prepare($conn, $sql)) {
+            mysqli_stmt_bind_param($stmt, 'i', $id);
+            if (mysqli_stmt_execute($stmt)) {
+                $res = mysqli_stmt_get_result($stmt);
+                $row = mysqli_fetch_assoc($res);
+                mysqli_stmt_close($stmt);
+                return $row ?: null;
+            }
+            mysqli_stmt_close($stmt);
+        }
+        error_log("ScheduleBatchController::get($id) failed: " . mysqli_error($conn));
         return null;
     }
 
@@ -51,8 +66,8 @@ class ScheduleBatchController {
         }
         
         $recurrence = $data['recurrence'] ?? 'daily';
-        $start_date = $data['start_date'] ?? null;
-        $end_date = $data['end_date'] ?? null;
+        $start_date = !empty($data['start_date']) ? $data['start_date'] : null;
+        $end_date = !empty($data['end_date']) ? $data['end_date'] : null;
         $day_of_week = isset($data['day_of_week']) && $data['day_of_week'] !== '' ? intval($data['day_of_week']) : null;
         $day_of_month = isset($data['day_of_month']) && $data['day_of_month'] !== '' ? intval($data['day_of_month']) : null;
         $start_time = $data['start_time'] ?? null;
@@ -68,7 +83,9 @@ class ScheduleBatchController {
             $start_time, $end_time,
             $subject_ids, $student_ids, $notes, $status
         );
-        return mysqli_stmt_execute($stmt);
+        $ok = mysqli_stmt_execute($stmt);
+        if ($ok) return mysqli_insert_id($conn);
+        return false;
     }
 
     public static function update($id, $data) {
@@ -87,8 +104,8 @@ class ScheduleBatchController {
         }
         
         $recurrence = $data['recurrence'] ?? 'daily';
-        $start_date = $data['start_date'] ?? null;
-        $end_date = $data['end_date'] ?? null;
+        $start_date = !empty($data['start_date']) ? $data['start_date'] : null;
+        $end_date = !empty($data['end_date']) ? $data['end_date'] : null;
         $day_of_week = isset($data['day_of_week']) && $data['day_of_week'] !== '' ? intval($data['day_of_week']) : null;
         $day_of_month = isset($data['day_of_month']) && $data['day_of_month'] !== '' ? intval($data['day_of_month']) : null;
         $start_time = $data['start_time'] ?? null;

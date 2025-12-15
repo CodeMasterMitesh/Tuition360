@@ -46,6 +46,7 @@ $show_actions = true;
             </div>
             <div class="modal-body">
                 <form id="addScheduleForm">
+                    <input type="hidden" name="csrf_token" value="<?= htmlspecialchars($_SESSION['csrf_token'] ?? '') ?>">
                     <input type="hidden" name="id" id="scheduleId" value="">
                     <div class="row g-3">
                         <div class="col-md-4">

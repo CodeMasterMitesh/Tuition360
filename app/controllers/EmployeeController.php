@@ -38,6 +38,13 @@ class EmployeeController {
         $row['employment'] = $emps;
         return $row;
     }
+    
+    public static function getByUserId($userId) {
+        global $conn;
+        $userId = intval($userId);
+        $res = mysqli_query($conn, "SELECT * FROM users WHERE id = $userId AND role IN ('employee', 'faculty') LIMIT 1");
+        return mysqli_fetch_assoc($res) ?: null;
+    }
     public static function create($data) {
         global $conn;
         $hashed = isset($data['password']) ? password_hash($data['password'], PASSWORD_DEFAULT) : null;
