@@ -129,6 +129,11 @@ return [
         'title' => 'Batch-wise Attendance Report',
         'roles' => $roles['admin'],
     ],
+    'report_faculty_attendance' => [
+        'view' => __DIR__ . '/../app/views/report_faculty_attendance.php',
+        'title' => 'Faculty Attendance Report',
+        'roles' => $roles['admin'],
+    ],
     'company' => [
         'view' => __DIR__ . '/../app/views/company.php',
         'title' => 'Company',

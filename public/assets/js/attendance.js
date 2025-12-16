@@ -111,6 +111,7 @@
                     try { if (form.querySelector('[name="out_time"]')) form.querySelector('[name="out_time"]').value = a.out_time || ''; } catch(e){}
                     try { if (form.querySelector('[name="note"]')) form.querySelector('[name="note"]').value = a.note || ''; } catch(e){}
                     try { if (form.querySelector('[name="branch_id"]')) form.querySelector('[name="branch_id"]').value = a.branch_id || 0; } catch(e){}
+                    try { if (form.querySelector('[name="batch_id"]')) form.querySelector('[name="batch_id"]').value = a.batch_id || ''; } catch(e){}
                     
                     // For employee/faculty attendance (backward compatibility)
                     try { if (form.querySelector('[name="employee_name"]')) form.querySelector('[name="employee_name"]').value = a.employee_name || (window.CURRENT_EMPLOYEE_NAME || ''); } catch(e){}
@@ -121,9 +122,13 @@
                 const titleEl = document.querySelector('#addAttendanceModal .modal-title'); 
                 if (titleEl) titleEl.innerText = 'Edit Attendance';
                 
+                // Update button text to 'Update'
+                const saveBtn = document.querySelector('#addAttendanceModal .modal-footer .btn-primary');
+                if (saveBtn) saveBtn.textContent = 'Update Attendance';
+                
                 // ensure fields enabled and save visible
                 if (form) Array.from(form.elements).forEach(el => el.disabled = false);
-                const saveBtn = document.querySelector('#addAttendanceModal .btn-primary'); if (saveBtn) saveBtn.style.display = '';
+                if (saveBtn) saveBtn.style.display = '';
                 const modalEl = document.getElementById('addAttendanceModal'); if (modalEl) bootstrap.Modal.getOrCreateInstance(modalEl).show();
             } else {
                 CRUD.toastError('Record not found');
@@ -231,12 +236,24 @@
     }
 
 
+    function resetAttendanceModal() {
+        const form = document.getElementById('addAttendanceForm');
+        if (form) form.reset();
+        const idField = document.getElementById('attendanceId');
+        if (idField) idField.value = '';
+        const titleEl = document.querySelector('#addAttendanceModal .modal-title');
+        if (titleEl) titleEl.textContent = 'Mark Attendance';
+        const saveBtn = document.querySelector('#addAttendanceModal .modal-footer .btn-primary');
+        if (saveBtn) saveBtn.textContent = 'Save Attendance';
+    }
+
     // expose
     window.initAttendance = initAttendance;
     window.exportToExcel = exportToExcel;
     window.printTable = printTable;
     window.refreshTable = refreshTable;
     window.editAttendance = editAttendance;
+    window.resetAttendanceModal = resetAttendanceModal;
     window.viewAttendance = viewAttendance;
     window.deleteAttendance = deleteAttendance;
     window.saveAttendance = saveAttendance;

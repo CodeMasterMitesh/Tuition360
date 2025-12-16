@@ -12,12 +12,25 @@ $role = strtolower($currentUser['role'] ?? 'employee');
 $entityType = ($role === 'faculty') ? 'faculty' : 'employee';
 $isAdmin = in_array($role, ['super_admin', 'branch_admin'], true);
 
+// Fetch faculty batches if user is faculty
+$facultyBatches = [];
+if ($entityType === 'faculty') {
+    $stmt = mysqli_prepare($conn, "SELECT DISTINCT ba.batch_id, b.title FROM batch_assignments ba JOIN batches b ON b.id = ba.batch_id WHERE ba.user_id = ? AND ba.role = 'faculty' ORDER BY b.title");
+    mysqli_stmt_bind_param($stmt, 'i', $currentUserId);
+    if ($stmt && mysqli_stmt_execute($stmt)) {
+        $res = mysqli_stmt_get_result($stmt);
+        while ($row = mysqli_fetch_assoc($res)) {
+            $facultyBatches[] = $row;
+        }
+    }
+}
+
 // Fetch attendance: admins see all staff, others see their own
 $attendance = [];
 if ($isAdmin) {
-    $stmt = mysqli_prepare($conn, "SELECT * FROM attendance WHERE entity_type IN ('employee','faculty') ORDER BY date DESC, id DESC");
+    $stmt = mysqli_prepare($conn, "SELECT a.*, b.title as batch_name FROM attendance a LEFT JOIN batches b ON b.id = a.batch_id WHERE a.entity_type IN ('employee','faculty') ORDER BY a.date DESC, a.id DESC");
 } else {
-    $stmt = mysqli_prepare($conn, "SELECT * FROM attendance WHERE entity_type = ? AND entity_id = ? ORDER BY date DESC, id DESC");
+    $stmt = mysqli_prepare($conn, "SELECT a.*, b.title as batch_name FROM attendance a LEFT JOIN batches b ON b.id = a.batch_id WHERE a.entity_type = ? AND a.entity_id = ? ORDER BY a.date DESC, a.id DESC");
     mysqli_stmt_bind_param($stmt, 'si', $entityType, $currentUserId);
 }
 if ($stmt && mysqli_stmt_execute($stmt)) {
@@ -49,7 +62,7 @@ $totalPages = 1;
                 <li class="breadcrumb-item active" aria-current="page"><i class="fas fa-briefcase"></i> Attendance</li>
             </ol>
         </nav>
-        <button class="btn btn-primary btn-action" data-bs-toggle="modal" data-bs-target="#addAttendanceModal">
+        <button class="btn btn-primary btn-action" data-bs-toggle="modal" data-bs-target="#addAttendanceModal" onclick="resetAttendanceModal()">
             <i class="fas fa-plus"></i> Mark Attendance
         </button>
     </div>
@@ -61,6 +74,7 @@ $totalPages = 1;
                     <tr>
                         <th width="60">ID</th>
                         <th>Staff</th>
+                        <th>Batch</th>
                         <th>Date</th>
                         <th>In</th>
                         <th>Out</th>
@@ -77,18 +91,19 @@ $totalPages = 1;
                                     <i class="fas fa-inbox"></i>
                                     <h4>No attendance records found</h4>
                                     <p>No attendance records match your search criteria</p>
-                                    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addAttendanceModal">
+                                    <button class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#addAttendanceModal" onclick="resetAttendanceModal()">
                                         <i class="fas fa-plus"></i> Mark First Attendance
                                     </button>
                                 </div>
                             </td>
-                            <td></td><td></td><td></td><td></td><td></td><td></td><td></td>
+                            <td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td>
                         </tr>
                     <?php else: ?>
                         <?php foreach ($attendance as $record): ?>
                             <tr>
                                 <td><?= htmlspecialchars($record['id'] ?? '') ?></td>
                                 <td><?= htmlspecialchars(ucfirst($record['entity_type'] ?? '')) ?> - <?= htmlspecialchars($employeeNames[$record['entity_id'] ?? 0] ?? ('Staff #' . ($record['entity_id'] ?? ''))) ?></td>
+                                <td><?= htmlspecialchars($record['batch_name'] ?? '-') ?></td>
                                 <td><?= htmlspecialchars($record['date'] ?? '') ?></td>
                                 <td><?= htmlspecialchars($record['in_time'] ?? '') ?></td>
                                 <td><?= htmlspecialchars($record['out_time'] ?? '') ?></td>
@@ -142,6 +157,17 @@ $totalPages = 1;
                         <label class="form-label"><?= $entityType === 'faculty' ? 'Faculty' : 'Employee' ?></label>
                         <input type="text" class="form-control" name="employee_name" value="<?= htmlspecialchars($currentUserName) ?>" readonly>
                     </div>
+                    <?php if ($entityType === 'faculty' && !empty($facultyBatches)): ?>
+                    <div class="mb-3">
+                        <label class="form-label">Batch</label>
+                        <select class="form-control" name="batch_id" id="attendanceBatchId">
+                            <option value="">Select Batch (Optional)</option>
+                            <?php foreach ($facultyBatches as $batch): ?>
+                                <option value="<?= htmlspecialchars($batch['batch_id']) ?>"><?= htmlspecialchars($batch['title']) ?></option>
+                            <?php endforeach; ?>
+                        </select>
+                    </div>
+                    <?php endif; ?>
                     <div class="mb-3">
                         <label class="form-label">Date</label>
                         <input type="date" class="form-control" name="date" value="<?= htmlspecialchars($today) ?>" required>

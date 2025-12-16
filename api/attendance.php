@@ -5,17 +5,27 @@ require_once __DIR__ . '/../config/db.php';
 $action = $_GET['action'] ?? '';
 header('Content-Type: application/json');
 if ($action === 'mark' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+    $id = intval($_POST['id'] ?? 0);
     $branch_id = $_POST['branch_id'] ?? null;
+    $batch_id = $_POST['batch_id'] ?? null;
     $entity_type = $_POST['entity_type'] ?? '';
     $entity_id = $_POST['entity_id'] ?? null;
     $date = $_POST['date'] ?? date('Y-m-d');
-    $in_time = $_POST['in_time'] ?? null;
-    $out_time = $_POST['out_time'] ?? null;
+    $in_time = !empty($_POST['in_time']) ? $_POST['in_time'] : null;
+    $out_time = !empty($_POST['out_time']) ? $_POST['out_time'] : null;
     $status = $_POST['status'] ?? '';
     $note = $_POST['note'] ?? '';
     $recorded_by = $_POST['recorded_by'] ?? null;
-    $stmt = mysqli_prepare($conn, "INSERT INTO attendance (branch_id, entity_type, entity_id, date, in_time, out_time, status, note, recorded_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
-    mysqli_stmt_bind_param($stmt, 'isisssssi', $branch_id, $entity_type, $entity_id, $date, $in_time, $out_time, $status, $note, $recorded_by);
+    
+    if ($id > 0) {
+        // Update existing record
+        $stmt = mysqli_prepare($conn, "UPDATE attendance SET branch_id = ?, batch_id = ?, entity_type = ?, entity_id = ?, date = ?, in_time = ?, out_time = ?, status = ?, note = ?, recorded_by = ? WHERE id = ?");
+        mysqli_stmt_bind_param($stmt, 'iisisssssii', $branch_id, $batch_id, $entity_type, $entity_id, $date, $in_time, $out_time, $status, $note, $recorded_by, $id);
+    } else {
+        // Insert new record
+        $stmt = mysqli_prepare($conn, "INSERT INTO attendance (branch_id, batch_id, entity_type, entity_id, date, in_time, out_time, status, note, recorded_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
+        mysqli_stmt_bind_param($stmt, 'iisissssi', $branch_id, $batch_id, $entity_type, $entity_id, $date, $in_time, $out_time, $status, $note, $recorded_by);
+    }
     $success = mysqli_stmt_execute($stmt);
     echo json_encode(['success' => $success]);
     exit;
@@ -26,12 +36,12 @@ if ($action === 'mark_students' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     $recorded_by = intval($_SESSION['user']['id'] ?? ($_POST['recorded_by'] ?? 0));
     $records = json_decode($_POST['records'] ?? '[]', true);
     $schedule_id = $_POST['schedule_id'] ?? null; // unused but accepted
-    $batch_id = $_POST['batch_id'] ?? null; // unused but accepted
+    $batch_id = intval($_POST['batch_id'] ?? 0) ?: null; // Now used for batch tracking
     if (!is_array($records) || empty($records)) {
         echo json_encode(['success' => false, 'message' => 'No records provided']);
         exit;
     }
-    $stmt = mysqli_prepare($conn, "INSERT INTO attendance (branch_id, entity_type, entity_id, date, status, note, recorded_by) VALUES (?, 'student', ?, ?, ?, ?, ?)");
+    $stmt = mysqli_prepare($conn, "INSERT INTO attendance (branch_id, batch_id, entity_type, entity_id, date, status, note, recorded_by) VALUES (?, ?, 'student', ?, ?, ?, ?, ?)");
     if (!$stmt) { echo json_encode(['success'=>false,'message'=>'Prepare failed']); exit; }
     $ok = true;
     foreach ($records as $rec) {
@@ -39,7 +49,7 @@ if ($action === 'mark_students' && $_SERVER['REQUEST_METHOD'] === 'POST') {
         $status = $rec['status'] ?? 'present';
         if (!in_array($status, ['present','absent','leave'], true)) $status = 'present';
         $note = substr($rec['note'] ?? '', 0, 255);
-        mysqli_stmt_bind_param($stmt, 'iisssi', $branch_id, $sid, $date, $status, $note, $recorded_by);
+        mysqli_stmt_bind_param($stmt, 'iiisssi', $branch_id, $batch_id, $sid, $date, $status, $note, $recorded_by);
         if (!mysqli_stmt_execute($stmt)) { $ok = false; break; }
     }
     echo json_encode(['success' => $ok]);
@@ -255,6 +265,93 @@ if ($action === 'report') {
 
     echo json_encode(['success' => false, 'message' => 'Database query failed']);
     exit;
+}
+
+// Faculty Attendance Report
+if ($action === 'faculty_report' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+    $jsonData = json_decode(file_get_contents('php://input'), true) ?? [];
+    $branchId = $jsonData['branch_id'] ?? 'all';
+    $facultyId = $jsonData['faculty_id'] ?? 'all';
+    $fromDate = $jsonData['from_date'] ?? null;
+    $toDate = $jsonData['to_date'] ?? null;
+    
+    if (!$fromDate || !$toDate) {
+        echo json_encode(['success' => false, 'message' => 'Date range required']);
+        exit;
+    }
+
+    $userRole = $_SESSION['user']['role'] ?? '';
+    $userId = intval($_SESSION['user']['id'] ?? 0);
+    $userBranchId = intval($_SESSION['branch_id'] ?? 0);
+
+    // Build base query with day of week
+    $sql = "SELECT 
+                a.id,
+                a.date,
+                DATE_FORMAT(a.date, '%W') as day_of_week,
+                a.entity_id as faculty_id,
+                u.name as faculty_name,
+                u.role,
+                b.title as batch_name,
+                a.in_time,
+                a.out_time,
+                a.status,
+                a.note
+            FROM attendance a
+            LEFT JOIN users u ON u.id = a.entity_id
+            LEFT JOIN batches b ON b.id = a.batch_id
+            WHERE a.entity_type IN ('faculty', 'employee')
+            AND a.date BETWEEN ? AND ?";
+
+    $params = [$fromDate, $toDate];
+    $types = 'ss';
+
+    // Filter by branch if super_admin with branch_id
+    if ($userRole === 'super_admin' && $branchId !== 'all') {
+        $sql .= " AND a.branch_id = ?";
+        $params[] = intval($branchId);
+        $types .= 'i';
+    } else if ($userRole === 'branch_admin') {
+        $sql .= " AND a.branch_id = ?";
+        $params[] = $userBranchId;
+        $types .= 'i';
+    }
+
+    // Filter by faculty if specified
+    if ($facultyId !== 'all') {
+        $sql .= " AND a.entity_id = ?";
+        $params[] = intval($facultyId);
+        $types .= 'i';
+    }
+
+    $sql .= " ORDER BY a.date DESC, a.entity_id ASC";
+
+    $stmt = mysqli_prepare($conn, $sql);
+    if (!$stmt) {
+        echo json_encode(['success' => false, 'message' => 'Query prepare failed']);
+        exit;
+    }
+
+    if (!empty($params)) {
+        $refs = [$stmt, $types];
+        foreach ($params as &$p) {
+            $refs[] = &$p;
+        }
+        call_user_func_array('mysqli_stmt_bind_param', $refs);
+    }
+
+    if (mysqli_stmt_execute($stmt)) {
+        $result = mysqli_stmt_get_result($stmt);
+        $records = [];
+        while ($row = mysqli_fetch_assoc($result)) {
+            $records[] = $row;
+        }
+        echo json_encode(['success' => true, 'records' => $records]);
+        exit;
+    } else {
+        echo json_encode(['success' => false, 'message' => 'Query execution failed']);
+        exit;
+    }
 }
 
 echo json_encode(['success' => false, 'message' => 'Invalid action']);
