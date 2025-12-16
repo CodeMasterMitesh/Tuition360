@@ -77,8 +77,11 @@ $navSections = [
     [
         'label' => 'Reports',
         'icon' => 'fa-chart-bar',
-        'page' => 'reports',
         'roles' => ['super_admin', 'branch_admin'],
+        'children' => [
+            ['label' => 'Batch Attendance', 'page' => 'report_batch_attendance', 'icon' => 'fa-calendar-check', 'roles' => ['super_admin', 'branch_admin']],
+            ['label' => 'All Reports', 'page' => 'reports', 'icon' => 'fa-list', 'roles' => ['super_admin', 'branch_admin']],
+        ],
     ],
 ];
 

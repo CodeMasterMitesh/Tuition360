@@ -19,7 +19,10 @@ class CourseController {
                     FROM courses c
                     LEFT JOIN batches b ON b.course_id = c.id
                     LEFT JOIN (
-                        SELECT batch_id, COUNT(*) AS enrolled FROM enrollments GROUP BY batch_id
+                        SELECT ba.batch_id, COUNT(*) AS enrolled
+                        FROM batch_assignment_students bas
+                        JOIN batch_assignments ba ON ba.id = bas.assignment_id
+                        GROUP BY ba.batch_id
                     ) ec ON ec.batch_id = b.id
                     WHERE c.branch_id = ?
                     GROUP BY c.id";
@@ -36,7 +39,10 @@ class CourseController {
                 FROM courses c
                 LEFT JOIN batches b ON b.course_id = c.id
                 LEFT JOIN (
-                    SELECT batch_id, COUNT(*) AS enrolled FROM enrollments GROUP BY batch_id
+                    SELECT ba.batch_id, COUNT(*) AS enrolled
+                    FROM batch_assignment_students bas
+                    JOIN batch_assignments ba ON ba.id = bas.assignment_id
+                    GROUP BY ba.batch_id
                 ) ec ON ec.batch_id = b.id
                 GROUP BY c.id";
         $result = mysqli_query($conn, $sql);
