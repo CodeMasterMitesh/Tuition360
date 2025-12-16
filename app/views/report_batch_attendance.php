@@ -29,14 +29,14 @@ if ($userRole === 'super_admin') {
 // Load all batches across all branches (or filtered by branch if branch_admin)
 $batches = [];
 if ($userRole === 'super_admin') {
-    $batchRes = mysqli_query($conn, "SELECT b.id, b.title, br.name as branch_name FROM batches b LEFT JOIN branches br ON br.id = b.branch_id ORDER BY b.title ASC");
+    $batchRes = mysqli_query($conn, "SELECT b.id, b.title, b.branch_id, br.name as branch_name FROM batches b LEFT JOIN branches br ON br.id = b.branch_id ORDER BY b.title ASC");
     while ($batch = mysqli_fetch_assoc($batchRes)) {
         $batches[] = $batch;
     }
 } else if ($userRole === 'branch_admin') {
     $branchId = intval($_SESSION['branch_id'] ?? 0);
     if ($branchId > 0) {
-        $stmt = mysqli_prepare($conn, "SELECT b.id, b.title, br.name as branch_name FROM batches b LEFT JOIN branches br ON br.id = b.branch_id WHERE b.branch_id = ? ORDER BY b.title ASC");
+        $stmt = mysqli_prepare($conn, "SELECT b.id, b.title, b.branch_id, br.name as branch_name FROM batches b LEFT JOIN branches br ON br.id = b.branch_id WHERE b.branch_id = ? ORDER BY b.title ASC");
         mysqli_stmt_bind_param($stmt, 'i', $branchId);
         mysqli_stmt_execute($stmt);
         $res = mysqli_stmt_get_result($stmt);
@@ -56,6 +56,7 @@ if ($userRole === 'super_admin') {
                   s.name as student_name, 
                   ba.batch_id, 
                   b.title as batch_title,
+                  b.branch_id,
                   br.name as branch_name
                   FROM students s
                   JOIN batch_assignment_students bas ON bas.student_id = s.id
@@ -71,6 +72,7 @@ if ($userRole === 'super_admin') {
                   s.name as student_name, 
                   ba.batch_id, 
                   b.title as batch_title,
+                  b.branch_id,
                   br.name as branch_name
                   FROM students s
                   JOIN batch_assignment_students bas ON bas.student_id = s.id
@@ -98,6 +100,7 @@ if ($reportResult && mysqli_num_rows($reportResult) > 0) {
                     'student_name' => $row['student_name'] ?? 'Unknown',
                     'batch_id' => $batchId,
                     'batch_title' => $row['batch_title'] ?? 'Unknown',
+                    'branch_id' => (int)($row['branch_id'] ?? 0),
                     'branch_name' => $row['branch_name'] ?? 'Unknown'
                 ];
             }
@@ -107,18 +110,49 @@ if ($reportResult && mysqli_num_rows($reportResult) > 0) {
 ?>
 
 <style>
+.breadcrumb {
+    font-size: 0.875rem;
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    border: 1px solid #dee2e6;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+.breadcrumb-item a {
+    text-decoration: none;
+    color: #495057;
+    transition: color 0.2s;
+}
+.breadcrumb-item a:hover {
+    color: #0d6efd;
+}
+.breadcrumb-item.active {
+    color: #0d6efd;
+    font-weight: 500;
+}
 .report-filters {
-    background: #f8f9fa;
-    padding: 1.5rem;
+    background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+    padding: 1.25rem;
     border-radius: 8px;
-    margin-bottom: 1.5rem;
+    margin-bottom: 1rem;
+    border: 1px solid #e9ecef;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+.report-filters .form-label {
+    font-size: 0.813rem;
+    font-weight: 500;
+    color: #495057;
+    margin-bottom: 0.375rem;
+}
+.report-filters .form-select,
+.report-filters .form-control {
+    font-size: 0.875rem;
+    padding: 0.5rem 0.75rem;
 }
 .report-table-container {
     overflow-x: auto;
     max-height: 600px;
 }
 .report-table {
-    font-size: 0.85rem;
+    font-size: 0.813rem;
 }
 .report-table th {
     position: sticky;
@@ -126,46 +160,51 @@ if ($reportResult && mysqli_num_rows($reportResult) > 0) {
     background: #fff;
     z-index: 10;
     white-space: nowrap;
+    font-size: 0.813rem;
+    padding: 0.5rem;
 }
 .report-table td {
     white-space: nowrap;
+    padding: 0.5rem;
 }
 .legend-item {
     display: inline-flex;
     align-items: center;
     margin-right: 1rem;
-    font-size: 0.875rem;
+    font-size: 0.813rem;
 }
 .legend-badge {
     display: inline-block;
-    width: 24px;
-    height: 24px;
+    width: 22px;
+    height: 22px;
     border-radius: 4px;
     text-align: center;
-    line-height: 24px;
-    margin-right: 0.25rem;
-    font-weight: bold;
+    line-height: 22px;
+    margin-right: 0.375rem;
+    font-weight: 600;
+    font-size: 0.75rem;
 }
 </style>
 
 <div class="container-fluid dashboard-container fade-in show">
-    <div class="row mb-4 align-items-center">
-        <div class="col">
-            <h3 class="mb-1"><i class="fas fa-calendar-check me-2"></i>Batch-wise Attendance Report</h3>
-            <p class="text-muted">View attendance records in horizontal matrix format</p>
-        </div>
-        <div class="col-auto">
-            <button class="btn btn-success" onclick="exportAttendanceReport()">
-                <i class="fas fa-file-export me-2"></i>Export
-            </button>
-        </div>
-    </div>
+    <!-- Breadcrumb -->
+    <nav aria-label="breadcrumb" class="mb-1">
+        <ol class="breadcrumb mb-0 py-2 px-3 bg-light rounded d-flex align-items-center">
+            <li class="breadcrumb-item"><a href="index.php?page=reports"><i class="fas fa-chart-bar me-1"></i>Reports</a></li>
+            <li class="breadcrumb-item active" aria-current="page"><i class="fas fa-calendar-check me-1"></i>Batch Attendance</li>
+            <li class="ms-auto">
+                <button class="btn btn-sm btn-success" onclick="exportAttendanceReport()">
+                    <i class="fas fa-file-export me-1"></i>Export
+                </button>
+            </li>
+        </ol>
+    </nav>
 
     <!-- Filters -->
     <div class="report-filters">
         <div class="row g-3">
             <?php if ($userRole === 'super_admin' && count($branches) > 1): ?>
-            <div class="col-md-3">
+            <div class="col-md-2">
                 <label for="branchFilter" class="form-label">Branch</label>
                 <select id="branchFilter" class="form-select">
                     <option value="all">All Branches</option>
@@ -176,12 +215,14 @@ if ($reportResult && mysqli_num_rows($reportResult) > 0) {
             </div>
             <?php endif; ?>
             
-            <div class="col-md-3">
+            <div class="col-md-2">
                 <label for="batchFilter" class="form-label">Batch</label>
                 <select id="batchFilter" class="form-select">
-                    <option value="all">All Batches</option>
+                    <option value="all" data-branch-id="all">All Batches</option>
                     <?php foreach ($batches as $batch): ?>
-                        <option value="<?= $batch['id'] ?>" data-branch="<?= htmlspecialchars($batch['branch_name'] ?? '') ?>">
+                        <option value="<?= $batch['id'] ?>" 
+                                data-branch-id="<?= $batch['branch_id'] ?? '' ?>"
+                                data-branch-name="<?= htmlspecialchars($batch['branch_name'] ?? '') ?>">
                             <?= htmlspecialchars($batch['title']) ?>
                             <?php if ($userRole === 'super_admin'): ?>
                                 (<?= htmlspecialchars($batch['branch_name'] ?? 'N/A') ?>)
@@ -191,24 +232,24 @@ if ($reportResult && mysqli_num_rows($reportResult) > 0) {
                 </select>
             </div>
 
-            <div class="col-md-3">
+            <div class="col-md-2">
                 <label for="studentFilter" class="form-label">Student</label>
                 <select id="studentFilter" class="form-select">
                     <option value="all">All Students</option>
                 </select>
             </div>
 
-            <div class="col-md-3">
+            <div class="col-md-2">
                 <label for="fromDate" class="form-label">From Date</label>
                 <input type="date" id="fromDate" class="form-control" value="<?= date('Y-m-01') ?>">
             </div>
 
-            <div class="col-md-3">
+            <div class="col-md-2">
                 <label for="toDate" class="form-label">To Date</label>
                 <input type="date" id="toDate" class="form-control" value="<?= date('Y-m-d') ?>">
             </div>
 
-            <div class="col-md-3">
+            <div class="col-md-2">
                 <label for="statusFilter" class="form-label">Status</label>
                 <select id="statusFilter" class="form-select">
                     <option value="all">All Status</option>
@@ -218,7 +259,7 @@ if ($reportResult && mysqli_num_rows($reportResult) > 0) {
                 </select>
             </div>
 
-            <div class="col-md-3 d-flex align-items-end">
+            <div class="col-md-2 d-flex align-items-end">
                 <button type="button" class="btn btn-primary w-100" onclick="loadAttendanceReport()">
                     <i class="fas fa-search me-2"></i>Generate Report
                 </button>
@@ -264,8 +305,8 @@ if ($reportResult && mysqli_num_rows($reportResult) > 0) {
 window.reportStudentData = <?= json_encode($reportStudents ?? []) ?>;
 window.userRole = '<?= $userRole ?>';
 
-console.log('Report Students Data:', window.reportStudentData);
-console.log('User Role:', window.userRole);
+// console.log('Report Students Data:', window.reportStudentData);
+// console.log('User Role:', window.userRole);
 
 // Update student filter based on batch and branch selection
 function updateStudentFilter() {
@@ -275,8 +316,8 @@ function updateStudentFilter() {
     
     const students = window.reportStudentData || [];
     
-    console.log('Batch ID:', batchId, 'Branch ID:', branchId);
-    console.log('Total students in data:', students.length);
+    // console.log('Batch ID:', batchId, 'Branch ID:', branchId);
+    // console.log('Total students in data:', students.length);
     
     // Clear current options
     studentFilter.innerHTML = '<option value="all">All Students</option>';
@@ -284,17 +325,16 @@ function updateStudentFilter() {
     // Filter students based on selection
     let filteredStudents = students;
     
-    if (batchId !== 'all') {
-        filteredStudents = filteredStudents.filter(s => s.batch_id == batchId);
+    // First filter by branch (if not "all" and super_admin)
+    if (branchId !== 'all' && window.userRole === 'super_admin') {
+        filteredStudents = filteredStudents.filter(s => s.branch_id == branchId);
+        // console.log('After branch filter:', filteredStudents.length, 'Branch ID:', branchId);
     }
     
-    if (branchId !== 'all' && window.userRole === 'super_admin') {
-        filteredStudents = filteredStudents.filter(s => {
-            // Find batch to get branch info
-            const batchOption = Array.from(document.getElementById('batchFilter').options)
-                .find(opt => opt.value == s.batch_id);
-            return batchOption && batchOption.getAttribute('data-branch') === document.querySelector(`#branchFilter option[value="${branchId}"]`)?.textContent;
-        });
+    // Then filter by batch (if not "all")
+    if (batchId !== 'all') {
+        filteredStudents = filteredStudents.filter(s => s.batch_id == batchId);
+        // console.log('After batch filter:', filteredStudents.length);
     }
     
     // Remove duplicates by student_id
@@ -307,7 +347,7 @@ function updateStudentFilter() {
         }
     });
     
-    console.log('Filtered unique students:', uniqueStudents.length);
+    // console.log('Filtered unique students:', uniqueStudents.length);
     
     // Populate dropdown
     uniqueStudents.forEach(student => {
@@ -326,8 +366,10 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('batchFilter').addEventListener('change', updateStudentFilter);
     if (document.getElementById('branchFilter')) {
         document.getElementById('branchFilter').addEventListener('change', function() {
-            updateStudentFilter();
+            // First filter batches by branch
             filterBatchesByBranch();
+            // Then update students based on new batch list
+            updateStudentFilter();
         });
     }
 });
@@ -338,9 +380,12 @@ function filterBatchesByBranch() {
     
     const branchFilter = document.getElementById('branchFilter');
     const batchFilter = document.getElementById('batchFilter');
-    const selectedBranch = branchFilter.value;
+    const selectedBranchId = branchFilter.value;
+    
+    // console.log('Filtering batches for branch ID:', selectedBranchId);
     
     const allOptions = Array.from(batchFilter.options);
+    let visibleBatches = 0;
     
     allOptions.forEach(option => {
         if (option.value === 'all') {
@@ -348,19 +393,30 @@ function filterBatchesByBranch() {
             return;
         }
         
-        if (selectedBranch === 'all') {
+        if (selectedBranchId === 'all') {
+            // Show all batches when "All Branches" is selected
             option.style.display = '';
+            visibleBatches++;
         } else {
-            const branchName = document.querySelector(`#branchFilter option[value="${selectedBranch}"]`)?.textContent;
-            const optionBranch = option.getAttribute('data-branch');
-            option.style.display = (optionBranch === branchName) ? '' : 'none';
+            // Show only batches from selected branch using branch_id
+            const batchBranchId = option.getAttribute('data-branch-id');
+            
+            // console.log('Batch:', option.textContent, 'Branch ID:', batchBranchId, 'Selected:', selectedBranchId);
+            
+            if (batchBranchId == selectedBranchId) {
+                option.style.display = '';
+                visibleBatches++;
+            } else {
+                option.style.display = 'none';
+            }
         }
     });
     
-    // Reset batch selection if hidden
+    // console.log('Visible batches:', visibleBatches);
+    
+    // Reset batch selection to "All Batches" if current selection is hidden
     if (batchFilter.selectedOptions[0]?.style.display === 'none') {
         batchFilter.value = 'all';
-        updateStudentFilter();
     }
 }
 

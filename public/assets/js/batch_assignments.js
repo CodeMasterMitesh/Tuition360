@@ -147,7 +147,7 @@ function initBatchSubjects() {
             // Check if listener is already attached
             if (addSubjectBtn.dataset.listenerAttached !== 'true') {
                 addSubjectBtn.addEventListener('click', function() {
-                    console.log('Add Subject clicked, available subjects:', availableSubjects.length);
+                    // console.log('Add Subject clicked, available subjects:', availableSubjects.length);
                     if (availableSubjects.length === 0) {
                         alert('Please select a batch first to load available subjects.');
                         return;
@@ -227,7 +227,7 @@ function initStudentRows() {
             if (!container.querySelector('.student-row')) container.appendChild(createStudentRow());
             
             addBtn.addEventListener('click', function(){ 
-                console.log('Add Student clicked');
+                // console.log('Add Student clicked');
                 container.appendChild(createStudentRow()); 
             });
             
@@ -253,7 +253,7 @@ window.refreshTable = refreshTable;
 
 // Reset function to clear dynamic content when opening Add modal
 function resetAssignmentModal() {
-    console.log('Resetting assignment modal to Add mode');
+    // console.log('Resetting assignment modal to Add mode');
     
     // Clear all student rows
     const studentsContainer = document.getElementById('assignmentStudentsContainer');
@@ -304,11 +304,11 @@ if (document.readyState === 'loading') {
         if (modalEl) {
             // Use 'show.bs.modal' to reset BEFORE modal is visible
             modalEl.addEventListener('show.bs.modal', function() {
-                console.log('Modal about to show, isEditMode:', isEditMode);
+                // console.log('Modal about to show, isEditMode:', isEditMode);
                 
                 // If not in edit mode, this is Add mode - reset everything
                 if (!isEditMode) {
-                    console.log('Add mode detected, resetting modal BEFORE show');
+                    // console.log('Add mode detected, resetting modal BEFORE show');
                     // Use setTimeout to let showAddModal finish its reset first
                     setTimeout(() => {
                         resetAssignmentModal();
@@ -321,7 +321,7 @@ if (document.readyState === 'loading') {
             
             // Use 'shown.bs.modal' to reinitialize buttons AFTER modal is visible
             modalEl.addEventListener('shown.bs.modal', function() {
-                console.log('Modal shown, reinitializing buttons');
+                // console.log('Modal shown, reinitializing buttons');
                 initStudentRows();
                 initBatchSubjects();
             });
@@ -332,11 +332,11 @@ if (document.readyState === 'loading') {
     if (modalEl) {
         // Use 'show.bs.modal' to reset BEFORE modal is visible
         modalEl.addEventListener('show.bs.modal', function() {
-            console.log('Modal about to show, isEditMode:', isEditMode);
+            // console.log('Modal about to show, isEditMode:', isEditMode);
             
             // If not in edit mode, this is Add mode - reset everything
             if (!isEditMode) {
-                console.log('Add mode detected, resetting modal BEFORE show');
+                // console.log('Add mode detected, resetting modal BEFORE show');
                 // Use setTimeout to let showAddModal finish its reset first
                 setTimeout(() => {
                     resetAssignmentModal();
@@ -349,7 +349,7 @@ if (document.readyState === 'loading') {
         
         // Use 'shown.bs.modal' to reinitialize buttons AFTER modal is visible
         modalEl.addEventListener('shown.bs.modal', function() {
-            console.log('Modal shown, reinitializing buttons');
+            // console.log('Modal shown, reinitializing buttons');
             initStudentRows();
             initBatchSubjects();
         });

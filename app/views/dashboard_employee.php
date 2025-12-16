@@ -705,12 +705,12 @@ async function saveBatchAttendance() {
 
 // Store student data for filtering
 window.reportStudentData = <?= json_encode($reportStudents ?? []) ?>;
-console.log('=== Report Data Debug ===');
-console.log('Initial Report Students Data:', window.reportStudentData);
-console.log('Count:', window.reportStudentData.length);
-console.log('PHP Report Students Count:', <?= count($reportStudents ?? []) ?>);
+// console.log('=== Report Data Debug ===');
+// console.log('Initial Report Students Data:', window.reportStudentData);
+// console.log('Count:', window.reportStudentData.length);
+// console.log('PHP Report Students Count:', <?= count($reportStudents ?? []) ?>);
 if (window.reportStudentData.length > 0) {
-    console.log('First student:', window.reportStudentData[0]);
+    // console.log('First student:', window.reportStudentData[0]);
 }
 
 // Update student filter based on batch selection
@@ -727,29 +727,29 @@ function updateStudentFilter() {
         return;
     }
     
-    console.log('Batch ID:', batchId, 'Type:', typeof batchId);
-    console.log('Total students in data:', students.length);
-    console.log('All Student Data:', students);
+    // console.log('Batch ID:', batchId, 'Type:', typeof batchId);
+    // console.log('Total students in data:', students.length);
+    // console.log('All Student Data:', students);
     
     let filteredStudents = [];
     
     if (batchId === 'all') {
         // Show all students from all batches
         filteredStudents = students;
-        console.log('All batches selected, showing all students:', filteredStudents.length);
+        // console.log('All batches selected, showing all students:', filteredStudents.length);
     } else {
         // Show only students from selected batch
         const selectedBatchId = parseInt(batchId);
-        console.log('Selected batch ID (parsed):', selectedBatchId);
+        // console.log('Selected batch ID (parsed):', selectedBatchId);
         
         filteredStudents = students.filter(s => {
             const match = parseInt(s.batch_id) === selectedBatchId;
             if (match) {
-                console.log('Match found:', s.student_name, 'batch_id:', s.batch_id);
+                // console.log('Match found:', s.student_name, 'batch_id:', s.batch_id);
             }
             return match;
         });
-        console.log('Filtered Students count:', filteredStudents.length);
+        // console.log('Filtered Students count:', filteredStudents.length);
     }
     
     // Remove duplicates by student_id
@@ -765,7 +765,7 @@ function updateStudentFilter() {
     // Sort by name
     uniqueStudents.sort((a, b) => a.student_name.localeCompare(b.student_name));
     
-    console.log('Final unique students:', uniqueStudents.length);
+    // console.log('Final unique students:', uniqueStudents.length);
     
     // Add student options
     uniqueStudents.forEach(student => {
@@ -787,12 +787,12 @@ function updateStudentFilter() {
 
 // Initialize student filter on page load
 document.addEventListener('DOMContentLoaded', function() {
-    console.log('Page loaded, reportStudentData:', window.reportStudentData);
-    console.log('Data length:', window.reportStudentData ? window.reportStudentData.length : 0);
+    // console.log('Page loaded, reportStudentData:', window.reportStudentData);
+    // console.log('Data length:', window.reportStudentData ? window.reportStudentData.length : 0);
     
     // If no data loaded, try to fetch it
     if (!window.reportStudentData || window.reportStudentData.length === 0) {
-        console.log('No student data available, attempting to fetch from API...');
+        // console.log('No student data available, attempting to fetch from API...');
         fetch('api/students.php?action=getall', {
             method: 'GET',
             headers: {'Content-Type': 'application/json'}
@@ -807,7 +807,7 @@ document.addEventListener('DOMContentLoaded', function() {
                     batch_id: s.batch_id || 0,
                     batch_title: s.batch_title || ''
                 }));
-                console.log('Fetched student data:', window.reportStudentData);
+                // console.log('Fetched student data:', window.reportStudentData);
             }
         })
         .catch(err => console.error('Failed to fetch student data:', err));
@@ -870,7 +870,7 @@ function loadAttendanceReport() {
     })
     .then(r => r.json())
     .then(data => {
-        console.log('Report response:', data);
+        // console.log('Report response:', data);
         if (data.success) {
             const records = data.records || [];
             

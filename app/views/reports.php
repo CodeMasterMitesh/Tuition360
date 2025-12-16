@@ -15,6 +15,14 @@ $reports = [
         'type' => 'internal'
     ],
     [
+        'title' => 'Faculty Attendance Report',
+        'description' => 'View faculty and employee attendance with in-time, out-time, batch and holiday indicators',
+        'icon' => 'fa-user-tie',
+        'color' => 'info',
+        'link' => 'index.php?page=report_faculty_attendance',
+        'type' => 'internal'
+    ],
+    [
         'title' => 'Outstanding Fees Report',
         'description' => 'View students with pending fee payments by batch and course',
         'icon' => 'fa-money-bill-wave',
