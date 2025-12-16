@@ -140,6 +140,7 @@ if ($action === 'report') {
     // Batch-wise attendance report with date and status filters
     $input = json_decode(file_get_contents('php://input'), true);
     $batchId = isset($input['batch_id']) ? $input['batch_id'] : '';
+    $studentId = isset($input['student_id']) ? $input['student_id'] : 'all';
     $fromDate = $input['from_date'] ?? '';
     $toDate = $input['to_date'] ?? '';
     $statusFilter = $input['status_filter'] ?? 'all';
@@ -149,37 +150,23 @@ if ($action === 'report') {
         exit;
     }
 
-    // Get student IDs from enrollments + schedule_batches
+    // Get student IDs from batch assignments
     $studentIds = [];
     
-    if ($batchId === 'all' || $batchId === '') {
-        // Get all students from all batches
-        $enrollSql = "SELECT DISTINCT student_id FROM enrollments WHERE status = 'active'";
-        $enrollStmt = mysqli_prepare($conn, $enrollSql);
-        if ($enrollStmt) {
-            if (mysqli_stmt_execute($enrollStmt)) {
-                $enrollRes = mysqli_stmt_get_result($enrollStmt);
-                while ($r = mysqli_fetch_assoc($enrollRes)) {
+    // If specific student selected, use only that student
+    if ($studentId !== 'all' && $studentId !== '') {
+        $studentIds = [intval($studentId)];
+    } else {
+        // Get students based on batch selection
+        if ($batchId === 'all' || $batchId === '') {
+        // Get all students from all batch assignments
+        $sql = "SELECT DISTINCT bas.student_id FROM batch_assignment_students bas";
+        $stmt = mysqli_prepare($conn, $sql);
+        if ($stmt) {
+            if (mysqli_stmt_execute($stmt)) {
+                $res = mysqli_stmt_get_result($stmt);
+                while ($r = mysqli_fetch_assoc($res)) {
                     $studentIds[] = intval($r['student_id']);
-                }
-            }
-        }
-
-        // From all schedule_batches
-        $schedSql = "SELECT student_ids FROM schedule_batches WHERE status = 'active'";
-        $schedStmt = mysqli_prepare($conn, $schedSql);
-        if ($schedStmt) {
-            if (mysqli_stmt_execute($schedStmt)) {
-                $schedRes = mysqli_stmt_get_result($schedStmt);
-                while ($r = mysqli_fetch_assoc($schedRes)) {
-                    if (!empty($r['student_ids'])) {
-                        $ids = json_decode($r['student_ids'], true);
-                        if (is_array($ids)) {
-                            foreach ($ids as $sid) {
-                                $studentIds[] = intval($sid);
-                            }
-                        }
-                    }
                 }
             }
         }
@@ -187,40 +174,25 @@ if ($action === 'report') {
         // Specific batch
         $batchIdInt = intval($batchId);
         
-        // From enrollments
-        $enrollSql = "SELECT DISTINCT student_id FROM enrollments WHERE batch_id = ? AND status = 'active'";
-        $enrollStmt = mysqli_prepare($conn, $enrollSql);
-        if ($enrollStmt) {
-            mysqli_stmt_bind_param($enrollStmt, 'i', $batchIdInt);
-            if (mysqli_stmt_execute($enrollStmt)) {
-                $enrollRes = mysqli_stmt_get_result($enrollStmt);
-                while ($r = mysqli_fetch_assoc($enrollRes)) {
+        // From batch_assignment_students
+        $sql = "SELECT DISTINCT bas.student_id 
+                FROM batch_assignment_students bas 
+                JOIN batch_assignments ba ON ba.id = bas.assignment_id 
+                WHERE ba.batch_id = ?";
+        $stmt = mysqli_prepare($conn, $sql);
+        if ($stmt) {
+            mysqli_stmt_bind_param($stmt, 'i', $batchIdInt);
+            if (mysqli_stmt_execute($stmt)) {
+                $res = mysqli_stmt_get_result($stmt);
+                while ($r = mysqli_fetch_assoc($res)) {
                     $studentIds[] = intval($r['student_id']);
-                }
-            }
-        }
-
-        // From schedule_batches
-        $schedSql = "SELECT student_ids FROM schedule_batches WHERE batch_id = ? AND status = 'active'";
-        $schedStmt = mysqli_prepare($conn, $schedSql);
-        if ($schedStmt) {
-            mysqli_stmt_bind_param($schedStmt, 'i', $batchIdInt);
-            if (mysqli_stmt_execute($schedStmt)) {
-                $schedRes = mysqli_stmt_get_result($schedStmt);
-                while ($r = mysqli_fetch_assoc($schedRes)) {
-                    if (!empty($r['student_ids'])) {
-                        $ids = json_decode($r['student_ids'], true);
-                        if (is_array($ids)) {
-                            foreach ($ids as $sid) {
-                                $studentIds[] = intval($sid);
-                            }
-                        }
-                    }
                 }
             }
         }
     }
 
+    }
+    
     $studentIds = array_unique($studentIds);
     
     if (empty($studentIds)) {
@@ -228,13 +200,17 @@ if ($action === 'report') {
         exit;
     }
 
-    // Build query for attendance records
+    // Build query to get attendance with batch names
     $placeholders = implode(',', array_fill(0, count($studentIds), '?'));
-    $sql = "SELECT a.*, s.name as student_name, b.title as batch_title 
+    
+    // Join with batch_assignment_students and schedule_batches to get batch name and times for each student
+    $sql = "SELECT a.*, s.name as student_name, b.title as batch_title, sb.start_time, sb.end_time
             FROM attendance a 
             LEFT JOIN students s ON a.entity_id = s.id 
-            LEFT JOIN enrollments e ON e.student_id = s.id AND e.status = 'active'
-            LEFT JOIN batches b ON b.id = e.batch_id
+            LEFT JOIN batch_assignment_students bas ON bas.student_id = s.id 
+            LEFT JOIN batch_assignments ba ON ba.id = bas.assignment_id 
+            LEFT JOIN batches b ON b.id = ba.batch_id
+            LEFT JOIN schedule_batches sb ON sb.batch_id = b.id AND sb.status = 'active'
             WHERE a.entity_type = 'student' 
             AND a.entity_id IN ($placeholders) 
             AND a.date >= ? 

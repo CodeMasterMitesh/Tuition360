@@ -34,13 +34,19 @@ if ($userRole === 'faculty' || $userRole === 'employee') {
         while ($row = mysqli_fetch_assoc($res)) { $allSchedules[] = $row; }
     }
     
-    // Preload batch enrollments
+    // Preload batch assignments and students
     if (!empty($allSchedules)) {
         $batchIds = array_values(array_unique(array_filter(array_map(fn($s) => (int)($s['batch_id'] ?? 0), $allSchedules))));
         if ($batchIds) {
             $in = implode(',', array_fill(0, count($batchIds), '?'));
             $types = str_repeat('i', count($batchIds));
-            $sql = "SELECT e.batch_id, s.id AS student_id, s.name AS student_name FROM enrollments e JOIN students s ON s.id = e.student_id WHERE e.status = 'active' AND e.batch_id IN ($in) ORDER BY s.name";
+            // Get students from batch_assignments via batch_assignment_students
+            $sql = "SELECT ba.batch_id, s.id AS student_id, s.name AS student_name 
+                    FROM batch_assignments ba 
+                    JOIN batch_assignment_students bas ON bas.assignment_id = ba.id 
+                    JOIN students s ON s.id = bas.student_id 
+                    WHERE ba.batch_id IN ($in) 
+                    ORDER BY s.name";
             $stmt = mysqli_prepare($conn, $sql);
             if ($stmt) {
                 mysqli_stmt_bind_param($stmt, $types, ...$batchIds);
@@ -79,6 +85,45 @@ if ($userRole === 'faculty' || $userRole === 'employee') {
                         $studentCache[(int)$row['student_id']] = $row['student_name'];
                     }
                 }
+            }
+        }
+    }
+}
+
+// Load all students with batch info for report filtering
+// Query students from batch_assignments via batch_assignment_students
+$reportStudents = [];
+$seenPairs = [];
+
+$reportSql = "SELECT DISTINCT 
+              s.id as student_id, 
+              s.name as student_name, 
+              ba.batch_id, 
+              b.title as batch_title
+              FROM students s
+              JOIN batch_assignment_students bas ON bas.student_id = s.id
+              JOIN batch_assignments ba ON ba.id = bas.assignment_id
+              JOIN batches b ON b.id = ba.batch_id
+              WHERE (s.status = 1 OR s.status = 'active' OR s.status IS NOT NULL)
+              ORDER BY s.name ASC, b.title ASC";
+
+$reportResult = mysqli_query($conn, $reportSql);
+if ($reportResult && mysqli_num_rows($reportResult) > 0) {
+    while ($row = mysqli_fetch_assoc($reportResult)) {
+        $studentId = (int)($row['student_id'] ?? 0);
+        $batchId = (int)($row['batch_id'] ?? 0);
+        
+        if ($studentId > 0 && $batchId > 0) {
+            $pair = $studentId . '_' . $batchId;
+            
+            if (!isset($seenPairs[$pair])) {
+                $seenPairs[$pair] = true;
+                $reportStudents[] = [
+                    'student_id' => $studentId,
+                    'student_name' => $row['student_name'] ?? 'Unknown',
+                    'batch_id' => $batchId,
+                    'batch_title' => $row['batch_title'] ?? 'Unknown'
+                ];
             }
         }
     }
@@ -360,7 +405,7 @@ if ($schedRes) {
                     <div class="row g-3 mb-3">
                         <div class="col-md-3">
                             <label class="form-label small">Batch</label>
-                            <select class="form-select form-select-sm" id="reportBatch">
+                            <select class="form-select form-select-sm" id="reportBatch" onchange="updateStudentFilter()">
                                 <option value="">-- Select Batch --</option>
                                 <option value="all">All Batches</option>
                                 <?php 
@@ -375,6 +420,12 @@ if ($schedRes) {
                                 ?>
                                     <option value="<?= $bid ?>"><?= htmlspecialchars($title) ?></option>
                                 <?php endforeach; ?>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label small">Student</label>
+                            <select class="form-select form-select-sm" id="reportStudent">
+                                <option value="all">All Students</option>
                             </select>
                         </div>
                         <div class="col-md-2">
@@ -394,26 +445,31 @@ if ($schedRes) {
                                 <option value="leave">Leave Only</option>
                             </select>
                         </div>
-                        <div class="col-md-3 d-flex align-items-end">
-                            <button class="btn btn-sm btn-primary w-100" onclick="loadAttendanceReport()">
+                    </div>
+                    <div class="row g-3 mb-3">
+                        <div class="col-md-12">
+                            <button class="btn btn-sm btn-primary" onclick="loadAttendanceReport()">
                                 <i class="fas fa-search"></i> Generate Report
+                            </button>
+                            <button class="btn btn-sm btn-outline-secondary ms-2" onclick="exportAttendanceReport()">
+                                <i class="fas fa-file-excel"></i> Export to Excel
                             </button>
                         </div>
                     </div>
                     <div id="reportContainer" class="table-responsive" style="display:none;">
-                        <table class="table table-sm table-bordered align-middle" id="reportTable">
+                        <table class="table table-sm table-bordered align-middle text-center" id="reportTable" style="font-size: 0.85rem;">
                             <thead class="table-light" id="reportTableHead">
-                                <tr>
-                                    <th>Student</th>
-                                    <th>Batch</th>
-                                    <th>Date</th>
-                                    <th>Status</th>
-                                    <th>Note</th>
-                                </tr>
+                                <!-- Will be populated dynamically -->
                             </thead>
                             <tbody id="reportBody">
                             </tbody>
                         </table>
+                        <div class="mt-2 small text-muted">
+                            <span class="badge bg-success me-2">P</span> Present
+                            <span class="badge bg-danger ms-3 me-2">A</span> Absent
+                            <span class="badge bg-warning ms-3 me-2">L</span> Leave
+                            <span class="badge bg-secondary ms-3 me-2">H</span> Holiday (Sunday)
+                        </div>
                     </div>
                     <div id="reportEmpty" class="text-center text-muted py-4">
                         <i class="fas fa-chart-bar fa-2x mb-2"></i>
@@ -647,6 +703,123 @@ async function saveBatchAttendance() {
     render();
 })();
 
+// Store student data for filtering
+window.reportStudentData = <?= json_encode($reportStudents ?? []) ?>;
+console.log('=== Report Data Debug ===');
+console.log('Initial Report Students Data:', window.reportStudentData);
+console.log('Count:', window.reportStudentData.length);
+console.log('PHP Report Students Count:', <?= count($reportStudents ?? []) ?>);
+if (window.reportStudentData.length > 0) {
+    console.log('First student:', window.reportStudentData[0]);
+}
+
+// Update student filter based on batch selection
+function updateStudentFilter() {
+    const batchId = document.getElementById('reportBatch').value;
+    const studentSelect = document.getElementById('reportStudent');
+    const students = window.reportStudentData || [];
+    
+    // Always start with "All Students" option
+    studentSelect.innerHTML = '<option value="all">All Students</option>';
+    
+    // If no batch selected, only show "All Students"
+    if (!batchId || batchId === '') {
+        return;
+    }
+    
+    console.log('Batch ID:', batchId, 'Type:', typeof batchId);
+    console.log('Total students in data:', students.length);
+    console.log('All Student Data:', students);
+    
+    let filteredStudents = [];
+    
+    if (batchId === 'all') {
+        // Show all students from all batches
+        filteredStudents = students;
+        console.log('All batches selected, showing all students:', filteredStudents.length);
+    } else {
+        // Show only students from selected batch
+        const selectedBatchId = parseInt(batchId);
+        console.log('Selected batch ID (parsed):', selectedBatchId);
+        
+        filteredStudents = students.filter(s => {
+            const match = parseInt(s.batch_id) === selectedBatchId;
+            if (match) {
+                console.log('Match found:', s.student_name, 'batch_id:', s.batch_id);
+            }
+            return match;
+        });
+        console.log('Filtered Students count:', filteredStudents.length);
+    }
+    
+    // Remove duplicates by student_id
+    const uniqueStudents = [];
+    const seenIds = new Set();
+    filteredStudents.forEach(s => {
+        if (!seenIds.has(s.student_id)) {
+            seenIds.add(s.student_id);
+            uniqueStudents.push(s);
+        }
+    });
+    
+    // Sort by name
+    uniqueStudents.sort((a, b) => a.student_name.localeCompare(b.student_name));
+    
+    console.log('Final unique students:', uniqueStudents.length);
+    
+    // Add student options
+    uniqueStudents.forEach(student => {
+        const option = document.createElement('option');
+        option.value = student.student_id;
+        option.textContent = student.student_name;
+        studentSelect.appendChild(option);
+    });
+    
+    // Show message if no students found
+    if (uniqueStudents.length === 0 && batchId !== 'all') {
+        const option = document.createElement('option');
+        option.value = '';
+        option.textContent = 'No students in this batch';
+        option.disabled = true;
+        studentSelect.appendChild(option);
+    }
+}
+
+// Initialize student filter on page load
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('Page loaded, reportStudentData:', window.reportStudentData);
+    console.log('Data length:', window.reportStudentData ? window.reportStudentData.length : 0);
+    
+    // If no data loaded, try to fetch it
+    if (!window.reportStudentData || window.reportStudentData.length === 0) {
+        console.log('No student data available, attempting to fetch from API...');
+        fetch('api/students.php?action=getall', {
+            method: 'GET',
+            headers: {'Content-Type': 'application/json'}
+        })
+        .then(r => r.json())
+        .then(data => {
+            if (data.success && data.students) {
+                // Convert to report format (assuming API returns students with batch info)
+                window.reportStudentData = data.students.map(s => ({
+                    student_id: s.id,
+                    student_name: s.name,
+                    batch_id: s.batch_id || 0,
+                    batch_title: s.batch_title || ''
+                }));
+                console.log('Fetched student data:', window.reportStudentData);
+            }
+        })
+        .catch(err => console.error('Failed to fetch student data:', err));
+    }
+    
+    // Trigger update if a batch is pre-selected
+    const batchSelect = document.getElementById('reportBatch');
+    if (batchSelect && batchSelect.value) {
+        setTimeout(updateStudentFilter, 500);
+    }
+});
+
 // Attendance Report Functions
 function loadAttendanceReport() {
     const batchId = document.getElementById('reportBatch').value;
@@ -669,12 +842,16 @@ function loadAttendanceReport() {
 
     // Show loading
     const reportBody = document.getElementById('reportBody');
+    const reportHead = document.getElementById('reportTableHead');
     const reportContainer = document.getElementById('reportContainer');
     const reportEmpty = document.getElementById('reportEmpty');
-    const colspan = 5;
-    reportBody.innerHTML = `<tr><td colspan="${colspan}" class="text-center"><span class="spinner-border spinner-border-sm me-2"></span>Loading...</td></tr>`;
+    
+    reportHead.innerHTML = '<tr><th colspan="100" class="text-center"><span class="spinner-border spinner-border-sm me-2"></span>Loading...</th></tr>';
+    reportBody.innerHTML = '';
     reportContainer.style.display = 'block';
     reportEmpty.style.display = 'none';
+
+    const studentId = document.getElementById('reportStudent').value;
 
     fetch(`api/attendance.php?action=report`, {
         method: 'POST',
@@ -684,6 +861,7 @@ function loadAttendanceReport() {
         },
         body: JSON.stringify({
             batch_id: batchId,
+            student_id: studentId,
             from_date: fromDate,
             to_date: toDate,
             status_filter: statusFilter,
@@ -695,32 +873,141 @@ function loadAttendanceReport() {
         console.log('Report response:', data);
         if (data.success) {
             const records = data.records || [];
-            if (records.length === 0) {
-                reportBody.innerHTML = `<tr><td colspan="${colspan}" class="text-center text-muted">No attendance records found for selected criteria</td></tr>`;
+            
+            // Generate date range
+            const start = new Date(fromDate);
+            const end = new Date(toDate);
+            const dates = [];
+            const dateHeaders = [];
+            
+            for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+                const dateStr = d.toISOString().split('T')[0];
+                dates.push(dateStr);
+                const day = d.getDate();
+                const month = d.toLocaleString('default', { month: 'short' });
+                const dayName = d.toLocaleString('default', { weekday: 'short' });
+                dateHeaders.push({ date: dateStr, day: day, month: month, dayName: dayName, isSunday: d.getDay() === 0 });
+            }
+            
+            if (dates.length === 0) {
+                reportHead.innerHTML = '<tr><th class="text-center text-muted">Invalid date range</th></tr>';
+                reportBody.innerHTML = '';
                 return;
             }
             
-            let html = '';
+            // Build student attendance map
+            const studentMap = {};
             records.forEach(rec => {
-                const statusBadge = rec.status === 'present' ? '<span class="badge bg-success-subtle text-success">Present</span>' :
-                                   rec.status === 'absent' ? '<span class="badge bg-danger-subtle text-danger">Absent</span>' :
-                                   '<span class="badge bg-warning-subtle text-warning">Leave</span>';
-                html += `<tr>
-                    <td>${rec.student_name || 'N/A'}</td>
-                    <td class="small text-muted">${rec.batch_title || '-'}</td>
-                    <td>${rec.date || 'N/A'}</td>
-                    <td>${statusBadge}</td>
-                    <td class="small text-muted">${rec.note || '-'}</td>
-                </tr>`;
+                const studentId = rec.entity_id;
+                const studentName = rec.student_name || 'Unknown';
+                const batchTitle = rec.batch_title || '-';
+                const startTime = rec.start_time || '';
+                const endTime = rec.end_time || '';
+                const date = rec.date;
+                const status = rec.status || 'absent';
+                
+                if (!studentMap[studentId]) {
+                    // Create batch display with times if available
+                    let batchDisplay = batchTitle;
+                    if (startTime && endTime) {
+                        // Format time to readable format (HH:MM)
+                        const start = startTime.substring(0, 5);
+                        const end = endTime.substring(0, 5);
+                        batchDisplay += ` <small class="text-muted">(${start} - ${end})</small>`;
+                    }
+                    
+                    studentMap[studentId] = {
+                        name: studentName,
+                        batch: batchDisplay,
+                        attendance: {}
+                    };
+                }
+                studentMap[studentId].attendance[date] = status;
             });
-            reportBody.innerHTML = html;
+            
+            const students = Object.values(studentMap);
+            
+            if (students.length === 0) {
+                reportHead.innerHTML = '<tr><th class="text-center text-muted">No students found for selected batch</th></tr>';
+                reportBody.innerHTML = '';
+                return;
+            }
+            
+            // Build header row
+            let headerHtml = '<tr><th rowspan="2" class="align-middle" style="min-width: 150px;">Student</th><th rowspan="2" class="align-middle" style="min-width: 120px;">Batch</th>';
+            dateHeaders.forEach(dh => {
+                const bgClass = dh.isSunday ? 'bg-secondary-subtle' : '';
+                headerHtml += `<th class="${bgClass}" style="min-width: 40px;">${dh.day}<br><small>${dh.month}</small></th>`;
+            });
+            headerHtml += '</tr><tr>';
+            dateHeaders.forEach(dh => {
+                const bgClass = dh.isSunday ? 'bg-secondary-subtle' : '';
+                headerHtml += `<th class="small ${bgClass}">${dh.dayName}</th>`;
+            });
+            headerHtml += '</tr>';
+            reportHead.innerHTML = headerHtml;
+            
+            // Build body rows
+            let bodyHtml = '';
+            students.forEach(student => {
+                bodyHtml += `<tr>`;
+                bodyHtml += `<td class="text-start fw-semibold">${student.name}</td>`;
+                bodyHtml += `<td class="text-start small text-muted">${student.batch}</td>`;
+                
+                dates.forEach((date, idx) => {
+                    const isSunday = dateHeaders[idx].isSunday;
+                    const attendance = student.attendance[date];
+                    
+                    let cellContent = '';
+                    let cellClass = '';
+                    
+                    if (isSunday) {
+                        // Sunday - show holiday
+                        cellContent = '<span class="badge bg-secondary">H</span>';
+                        cellClass = 'bg-secondary-subtle';
+                    } else if (attendance) {
+                        // Has attendance record
+                        if (statusFilter !== 'all' && attendance !== statusFilter) {
+                            // Filtered out - show dash
+                            cellContent = '-';
+                            cellClass = 'text-muted';
+                        } else if (attendance === 'present') {
+                            cellContent = '<span class="badge bg-success">P</span>';
+                        } else if (attendance === 'leave') {
+                            cellContent = '<span class="badge bg-warning text-dark">L</span>';
+                        } else {
+                            cellContent = '<span class="badge bg-danger">A</span>';
+                        }
+                    } else {
+                        // No data - default absent
+                        if (statusFilter === 'all' || statusFilter === 'absent') {
+                            cellContent = '<span class="badge bg-danger">A</span>';
+                        } else {
+                            cellContent = '-';
+                            cellClass = 'text-muted';
+                        }
+                    }
+                    
+                    bodyHtml += `<td class="${cellClass}">${cellContent}</td>`;
+                });
+                
+                bodyHtml += `</tr>`;
+            });
+            
+            reportBody.innerHTML = bodyHtml;
         } else {
-            reportBody.innerHTML = `<tr><td colspan="${colspan}" class="text-center text-danger">${data.message || 'Failed to load report'}</td></tr>`;
+            reportHead.innerHTML = '<tr><th class="text-center text-danger">Error</th></tr>';
+            reportBody.innerHTML = `<tr><td class="text-center text-danger">${data.message || 'Failed to load report'}</td></tr>`;
         }
     })
     .catch(err => {
         console.error('Report error:', err);
-        reportBody.innerHTML = `<tr><td colspan="${colspan}" class="text-center text-danger">Error loading report. Please try again.</td></tr>`;
+        reportHead.innerHTML = '<tr><th class="text-center text-danger">Error</th></tr>';
+        reportBody.innerHTML = '<tr><td class="text-center text-danger">Error loading report. Please try again.</td></tr>';
     });
+}
+
+function exportAttendanceReport() {
+    alert('Export functionality will be implemented soon!');
 }
 </script>

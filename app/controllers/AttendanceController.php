@@ -18,12 +18,13 @@ class AttendanceController {
         // Build query based on entity type
         if ($entity_type === 'student') {
             // Join with students and batches for student attendance
-            $sql = "SELECT a.*, s.name as student_name, s.email as student_email, 
+                $sql = "SELECT a.*, s.name as student_name, s.email as student_email, 
                     b.title as batch_title, br.name as branch_name
                     FROM attendance a 
                     LEFT JOIN students s ON a.entity_id = s.id AND a.entity_type = 'student'
-                    LEFT JOIN enrollments e ON e.student_id = s.id AND e.status = 'active'
-                    LEFT JOIN batches b ON b.id = e.batch_id
+                    LEFT JOIN batch_assignment_students bas ON bas.student_id = s.id
+                    LEFT JOIN batch_assignments ba ON ba.id = bas.assignment_id
+                    LEFT JOIN batches b ON b.id = ba.batch_id
                     LEFT JOIN branches br ON br.id = a.branch_id
                     WHERE a.entity_type = 'student'";
             
