@@ -24,7 +24,7 @@ if ($action === 'mark' && $_SERVER['REQUEST_METHOD'] === 'POST') {
     } else {
         // Insert new record
         $stmt = mysqli_prepare($conn, "INSERT INTO attendance (branch_id, batch_id, entity_type, entity_id, date, in_time, out_time, status, note, recorded_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
-        mysqli_stmt_bind_param($stmt, 'iisissssi', $branch_id, $batch_id, $entity_type, $entity_id, $date, $in_time, $out_time, $status, $note, $recorded_by);
+        mysqli_stmt_bind_param($stmt, 'iisississi', $branch_id, $batch_id, $entity_type, $entity_id, $date, $in_time, $out_time, $status, $note, $recorded_by);
     }
     $success = mysqli_stmt_execute($stmt);
     echo json_encode(['success' => $success]);
