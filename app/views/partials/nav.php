@@ -80,6 +80,7 @@ $navSections = [
         'roles' => ['super_admin', 'branch_admin'],
         'children' => [
             ['label' => 'Batch Attendance', 'page' => 'report_batch_attendance', 'icon' => 'fa-calendar-check', 'roles' => ['super_admin', 'branch_admin']],
+            ['label' => 'Faculty Attendance', 'page' => 'report_faculty_attendance', 'icon' => 'fa-user-tie', 'roles' => ['super_admin', 'branch_admin']],
             ['label' => 'All Reports', 'page' => 'reports', 'icon' => 'fa-list', 'roles' => ['super_admin', 'branch_admin']],
         ],
     ],

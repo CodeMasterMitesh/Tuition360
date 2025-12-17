@@ -46,60 +46,72 @@ $reports = [
 .report-card {
     transition: all 0.3s ease;
     cursor: pointer;
-    border: 2px solid transparent;
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    height: 100%;
 }
 .report-card:hover {
-    transform: translateY(-5px);
-    box-shadow: 0 8px 16px rgba(0,0,0,0.1);
+    transform: translateY(-3px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
     border-color: var(--bs-primary);
 }
 .report-icon {
-    font-size: 3rem;
-    margin-bottom: 1rem;
+    font-size: 2rem;
+    margin-bottom: 0.75rem;
+}
+.report-card .card-body {
+    padding: 1.25rem;
+}
+.report-card .card-title {
+    font-size: 0.938rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+}
+.report-card .card-text {
+    font-size: 0.813rem;
+    margin-bottom: 0.75rem;
+    line-height: 1.4;
+}
+.report-card .btn {
+    font-size: 0.813rem;
+    padding: 0.375rem 0.75rem;
 }
 </style>
 
 <div class="container-fluid dashboard-container fade-in show">
-    <div class="row mb-4 align-items-center">
+    <div class="row mb-3 align-items-center">
         <div class="col">
-            <h3 class="mb-1"><i class="fas fa-chart-bar me-2"></i>Reports</h3>
-            <p class="text-muted">Access various reports and analytics</p>
+            <h4 class="mb-1"><i class="fas fa-chart-bar me-2"></i>Reports</h4>
+            <p class="text-muted mb-0" style="font-size: 0.875rem;">Access various reports and analytics</p>
         </div>
     </div>
 
-    <div class="row g-4">
+    <div class="row g-3">
         <?php foreach ($reports as $report): ?>
             <?php 
             // Check role access if specified
             if (isset($report['roles']) && !in_array($userRole, $report['roles'])) {
                 continue;
             }
+            $linkAttr = $report['type'] === 'api' ? 'target="_blank" data-no-ajax' : '';
             ?>
-            <div class="col-md-6 col-lg-4">
-                <div class="card report-card h-100" onclick="openReport('<?= $report['link'] ?>', '<?= $report['type'] ?>')">
-                    <div class="card-body text-center">
-                        <div class="report-icon text-<?= $report['color'] ?>">
-                            <i class="fas <?= $report['icon'] ?>"></i>
+            <div class="col-md-6 col-lg-3">
+                <a href="<?= $report['link'] ?>" <?= $linkAttr ?> class="text-decoration-none">
+                    <div class="card report-card">
+                        <div class="card-body text-center">
+                            <div class="report-icon text-<?= $report['color'] ?>">
+                                <i class="fas <?= $report['icon'] ?>"></i>
+                            </div>
+                            <h5 class="card-title"><?= htmlspecialchars($report['title']) ?></h5>
+                            <p class="card-text text-muted"><?= htmlspecialchars($report['description']) ?></p>
+                            <button class="btn btn-<?= $report['color'] ?>">
+                                <i class="fas fa-eye me-1"></i>View Report
+                            </button>
                         </div>
-                        <h5 class="card-title"><?= htmlspecialchars($report['title']) ?></h5>
-                        <p class="card-text text-muted"><?= htmlspecialchars($report['description']) ?></p>
-                        <button class="btn btn-<?= $report['color'] ?> mt-2">
-                            <i class="fas fa-eye me-2"></i>View Report
-                        </button>
                     </div>
-                </div>
+                </a>
             </div>
         <?php endforeach; ?>
     </div>
 </div>
-
-<script>
-function openReport(link, type) {
-    if (type === 'internal') {
-        window.location.href = link;
-    } else if (type === 'api') {
-        window.open(link, '_blank');
-    }
-}
-</script>
 
