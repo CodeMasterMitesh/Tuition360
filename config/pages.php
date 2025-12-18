@@ -139,6 +139,11 @@ return [
         'title' => 'Company',
         'roles' => $roles['super'],
     ],
+    'profile' => [
+        'view' => __DIR__ . '/../app/views/profile.php',
+        'title' => 'My Profile',
+        'roles' => $roles['all'],
+    ],
     'logout' => [
         'view' => __DIR__ . '/../app/views/logout.php',
         'title' => 'Logout',
