@@ -159,6 +159,88 @@ if ($schedRes) {
 }
 ?>
 
+<style>
+.report-filters {
+    background: linear-gradient(135deg, #ffffff 0%, #f8f9fa 100%);
+    padding: 1rem;
+    border-radius: 8px;
+    border: 1px solid #e9ecef;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+.report-filters .form-label {
+    font-size: 0.813rem;
+    font-weight: 500;
+    color: #495057;
+    margin-bottom: 0.375rem;
+}
+.report-table-container {
+    overflow-x: auto;
+    max-height: 600px;
+}
+.report-table {
+    font-size: 0.813rem;
+}
+.report-table th {
+    position: sticky;
+    top: 0;
+    background: #fff;
+    z-index: 10;
+    white-space: nowrap;
+    font-size: 0.813rem;
+    padding: 0.5rem;
+    background: linear-gradient(135deg, #e9ecef 0%, #dee2e6 100%);
+    border-bottom: 2px solid #dee2e6;
+}
+.report-table td {
+    white-space: nowrap;
+    padding: 0.5rem;
+    border-bottom: 1px solid #dee2e6;
+}
+.report-table tbody tr:hover {
+    background: #f8f9fa !important;
+}
+.attendance-badge {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    font-weight: 700;
+    font-size: 0.875rem;
+    color: white;
+}
+.badge-present {
+    background-color: #28a745;
+}
+.badge-absent {
+    background-color: #dc3545;
+}
+.badge-leave {
+    background-color: #ffc107;
+    color: #000;
+}
+.badge-holiday {
+    background-color: #6c757d;
+}
+.time-cell {
+    font-family: 'Courier New', monospace;
+    font-size: 0.75rem;
+}
+.time-info {
+    font-size: 0.7rem;
+    color: #666;
+    margin-top: 2px;
+}
+.legend-item {
+    display: inline-flex;
+    align-items: center;
+    margin-right: 1rem;
+    font-size: 0.813rem;
+    gap: 0.5rem;
+}
+</style>
+
 <div class="container-fluid dashboard-container fade-in show">
     <div class="row mb-4 align-items-center">
         <div class="col">
@@ -389,6 +471,58 @@ if ($schedRes) {
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
                     <button type="button" class="btn btn-primary" onclick="saveBatchAttendance()">Save Attendance</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- My Attendance Report -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                    <h6 class="mb-0"><i class="fas fa-chart-line me-2"></i>My Attendance Report</h6>
+                    <button class="btn btn-sm btn-primary" onclick="loadMyAttendanceReport()">
+                        <i class="fas fa-sync me-1"></i>Load Report
+                    </button>
+                </div>
+                <div class="card-body">
+                    <div class="report-filters mb-3">
+                        <div class="row g-3">
+                            <div class="col-md-4">
+                                <label for="myFromDate" class="form-label">From Date</label>
+                                <input type="date" class="form-control form-control-sm" id="myFromDate" 
+                                       value="<?= date('Y-m-01') ?>" />
+                            </div>
+                            <div class="col-md-4">
+                                <label for="myToDate" class="form-label">To Date</label>
+                                <input type="date" class="form-control form-control-sm" id="myToDate" 
+                                       value="<?= date('Y-m-d') ?>" />
+                            </div>
+                        </div>
+                    </div>
+                    <div class="report-table-container">
+                        <table class="table table-sm table-bordered report-table">
+                            <thead id="myReportHead">
+                                <tr><th class="text-center text-muted">Select date range and click Load Report</th></tr>
+                            </thead>
+                            <tbody id="myReportBody"></tbody>
+                        </table>
+                    </div>
+                    <div class="mt-2">
+                        <div class="legend-item">
+                            <div class="attendance-badge badge-present">P</div> Present
+                        </div>
+                        <div class="legend-item">
+                            <div class="attendance-badge badge-absent">A</div> Absent
+                        </div>
+                        <div class="legend-item">
+                            <div class="attendance-badge badge-leave">L</div> Leave
+                        </div>
+                        <div class="legend-item">
+                            <div class="attendance-badge badge-holiday">H</div> Holiday
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -702,6 +836,158 @@ async function saveBatchAttendance() {
 
     render();
 })();
+
+// My Attendance Report Function
+function loadMyAttendanceReport() {
+    const fromDate = document.getElementById('myFromDate').value;
+    const toDate = document.getElementById('myToDate').value;
+    
+    if (!fromDate || !toDate) {
+        CRUD.toastError('Please select date range');
+        return;
+    }
+    
+    const reportHead = document.getElementById('myReportHead');
+    const reportBody = document.getElementById('myReportBody');
+    
+    reportHead.innerHTML = '<tr><th class="text-center">Loading...</th></tr>';
+    reportBody.innerHTML = '<tr><td class="text-center">Please wait...</td></tr>';
+    
+    fetch('../api/attendance.php?action=faculty_report', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-Token': '<?= $_SESSION['csrf_token'] ?? '' ?>'
+        },
+        body: JSON.stringify({
+            branch_id: 'all',
+            faculty_id: '<?= $userId ?>',
+            from_date: fromDate,
+            to_date: toDate,
+            csrf_token: '<?= $_SESSION['csrf_token'] ?? '' ?>'
+        })
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.success && data.records) {
+            renderMyAttendanceReport(data.records, fromDate, toDate);
+        } else {
+            reportHead.innerHTML = '<tr><th class="text-center text-danger">Error</th></tr>';
+            reportBody.innerHTML = `<tr><td class="text-center text-danger">${data.message || 'Failed to load report'}</td></tr>`;
+        }
+    })
+    .catch(err => {
+        console.error('Report error:', err);
+        reportHead.innerHTML = '<tr><th class="text-center text-danger">Error</th></tr>';
+        reportBody.innerHTML = '<tr><td class="text-center text-danger">Error loading report. Please try again.</td></tr>';
+    });
+}
+
+function renderMyAttendanceReport(records, fromDate, toDate) {
+    const reportHead = document.getElementById('myReportHead');
+    const reportBody = document.getElementById('myReportBody');
+    
+    if (records.length === 0) {
+        reportHead.innerHTML = '<tr><th class="text-center text-muted">No records found</th></tr>';
+        reportBody.innerHTML = '';
+        return;
+    }
+    
+    // Generate date range
+    const start = new Date(fromDate);
+    const end = new Date(toDate);
+    const dateHeaders = [];
+    
+    for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
+        const dateStr = d.toISOString().split('T')[0];
+        const dayName = d.toLocaleDateString('en-US', { weekday: 'short' });
+        const day = d.getDate();
+        const month = d.toLocaleDateString('en-US', { month: 'short' });
+        const isSunday = d.getDay() === 0;
+        
+        dateHeaders.push({ date: dateStr, dayName, day, month, isSunday });
+    }
+    
+    // Build header row with dates
+    let headerHtml = '<tr><th style="background: #f8f9fa; text-align: left; padding: 0.75rem !important; min-width: 180px;">Date</th><th style="background: #f8f9fa; text-align: left; padding: 0.75rem !important; min-width: 200px;">Batch</th><th style="background: #f8f9fa; text-align: center; padding: 0.75rem !important;">Status</th><th style="background: #f8f9fa; text-align: center; padding: 0.75rem !important;">In Time</th><th style="background: #f8f9fa; text-align: center; padding: 0.75rem !important;">Out Time</th></tr>';
+    reportHead.innerHTML = headerHtml;
+    
+    // Build attendance map: key = "date", value = array of records
+    const attendanceMap = {};
+    records.forEach(rec => {
+        const key = rec.date;
+        if (!attendanceMap[key]) {
+            attendanceMap[key] = [];
+        }
+        attendanceMap[key].push(rec);
+    });
+    
+    // Build body rows - one row per date
+    let bodyHtml = '';
+    dateHeaders.forEach((header, idx) => {
+        const dayRecords = attendanceMap[header.date] || [];
+        const rowBg = idx % 2 === 0 ? '#ffffff' : '#f8f9fa';
+        const cellBg = header.isSunday ? '#fff3cd' : rowBg;
+        
+        if (header.isSunday && dayRecords.length === 0) {
+            // Sunday with no records - show holiday
+            bodyHtml += `<tr style="background: ${cellBg};">
+                <td style="padding: 0.75rem !important;">${header.day} ${header.month} (${header.dayName})</td>
+                <td style="padding: 0.75rem !important;">-</td>
+                <td class="text-center"><span class="badge bg-secondary">Holiday</span></td>
+                <td class="text-center">-</td>
+                <td class="text-center">-</td>
+            </tr>`;
+        } else if (dayRecords.length === 0) {
+            // No records - show absent
+            bodyHtml += `<tr style="background: ${rowBg};">
+                <td style="padding: 0.75rem !important;">${header.day} ${header.month} (${header.dayName})</td>
+                <td style="padding: 0.75rem !important;">-</td>
+                <td class="text-center"><span class="badge bg-danger">Absent</span></td>
+                <td class="text-center">-</td>
+                <td class="text-center">-</td>
+            </tr>`;
+        } else {
+            // Has attendance records - show each one
+            dayRecords.forEach((rec, recIdx) => {
+                const statusMap = { 
+                    'present': ['Present', 'bg-success'], 
+                    'absent': ['Absent', 'bg-danger'], 
+                    'leave': ['Leave', 'bg-warning'] 
+                };
+                const [statusLabel, statusClass] = statusMap[rec.status] || ['Unknown', 'bg-secondary'];
+                
+                const inTime = rec.in_time ? rec.in_time.substring(0, 5) : '-';
+                const outTime = rec.out_time ? rec.out_time.substring(0, 5) : '-';
+                const batchName = rec.batch_name || '-';
+                
+                // Show date only for first record of the day
+                const dateDisplay = recIdx === 0 ? `${header.day} ${header.month} (${header.dayName})` : '';
+                
+                bodyHtml += `<tr style="background: ${cellBg};">
+                    <td style="padding: 0.75rem !important;">${dateDisplay}</td>
+                    <td style="padding: 0.75rem !important; font-size: 0.813rem;">${escapeHtml(batchName)}</td>
+                    <td class="text-center"><span class="badge ${statusClass}">${statusLabel}</span></td>
+                    <td class="text-center time-cell">${inTime}</td>
+                    <td class="text-center time-cell">${outTime}</td>
+                </tr>`;
+            });
+        }
+    });
+    
+    reportBody.innerHTML = bodyHtml;
+}
+
+function escapeHtml(text) {
+    const map = {
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#039;'
+    };
+    return String(text).replace(/[&<>"']/g, m => map[m]);
+}
 
 // Store student data for filtering
 window.reportStudentData = <?= json_encode($reportStudents ?? []) ?>;
