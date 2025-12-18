@@ -120,13 +120,22 @@ $canAccess = function (array $roles) use ($userRole): bool {
                 </li>
                 <li class="nav-item dropdown">
                     <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false" data-no-ajax>
-                        <img src="https://ui-avatars.com/api/?name=<?= urlencode($currentUser['name'] ?? 'User') ?>&background=0D8ABC&color=fff" alt="User" width="32" height="32" class="rounded-circle me-2">
+                        <?php
+                            $avatarUrl = '';
+                            if (!empty($currentUser['photo'])) {
+                                $avatarUrl = $currentUser['photo'];
+                            } else {
+                                $avatarUrl = 'https://ui-avatars.com/api/?name=' . urlencode($currentUser['name'] ?? 'User') . '&background=0D8ABC&color=fff';
+                            }
+                        ?>
+                        <img src="<?= htmlspecialchars($avatarUrl) ?>" alt="User" class="nav-avatar me-2">
                         <span class="d-none d-lg-inline">
                             <?= htmlspecialchars($currentUser['name'] ?? 'User') ?>
                         </span>
                     </a>
                     <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
                         <li><h6 class="dropdown-header mb-0"><?= htmlspecialchars(ucwords(str_replace('_', ' ', $userRole ?: ''))) ?></h6></li>
+                        <li><a class="dropdown-item" href="index.php?page=profile"><i class="fas fa-user-circle me-2"></i>My Profile</a></li>
                         <?php
                             $settingsRoles = $pagesConfig['settings']['roles'] ?? [];
                             $canSeeSettings = empty($settingsRoles) || ($userRole && in_array($userRole, $settingsRoles, true));

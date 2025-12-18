@@ -164,6 +164,18 @@
      box-shadow: var(--soft-shadow-1), var(--soft-shadow-2);
  }
 
+/* Nav avatar improvements */
+.nav-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    object-fit: cover;
+    object-position: center;
+    border: 2px solid #ffffff;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    background-color: #f0f2f5;
+}
+
 .shadow-elevated {
     box-shadow: 0 12px 30px rgba(15, 23, 42, 0.08) !important;
 }
