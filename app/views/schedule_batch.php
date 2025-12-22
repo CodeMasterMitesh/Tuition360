@@ -123,17 +123,17 @@ $show_actions = true;
                             </div>
                         </div>
                         <div class="col-md-4 recurrence recurrence-weekly" style="display:none;">
-                            <label class="form-label">Weekday</label>
-                            <select class="form-select" name="day_of_week" id="scheduleDayOfWeek">
-                                <option value="">-- Select --</option>
-                                <option value="1">Monday</option>
-                                <option value="2">Tuesday</option>
-                                <option value="3">Wednesday</option>
-                                <option value="4">Thursday</option>
-                                <option value="5">Friday</option>
-                                <option value="6">Saturday</option>
-                                <option value="0">Sunday</option>
-                            </select>
+                            <label class="form-label">Weekdays</label>
+                            <div class="d-flex flex-wrap gap-2" id="scheduleWeekdays">
+                                <?php $days = [['0','Sun'],['1','Mon'],['2','Tue'],['3','Wed'],['4','Thu'],['5','Fri'],['6','Sat']];
+                                foreach ($days as [$val,$lbl]): ?>
+                                    <div class="form-check form-check-inline">
+                                        <input class="form-check-input" type="checkbox" name="weekdays[]" id="wd_<?= $val ?>" value="<?= $val ?>">
+                                        <label class="form-check-label" for="wd_<?= $val ?>"><?= $lbl ?></label>
+                                    </div>
+                                <?php endforeach; ?>
+                            </div>
+                            <small class="text-muted">Select one or more weekdays</small>
                         </div>
                         <div class="col-md-4 recurrence recurrence-weekly" style="display:none;">
                             <label class="form-label">Time</label>

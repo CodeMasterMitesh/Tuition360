@@ -54,7 +54,13 @@
                 const recurrenceLabel = row.recurrence.charAt(0).toUpperCase()+row.recurrence.slice(1);
                 const windowLabel = [row.start_date||'', row.end_date?(' to '+row.end_date):''].join('');
                 let timing = '';
-                if (row.recurrence === 'weekly') timing = `${weekdayLabel(row.day_of_week)} ${row.start_time||''}`;
+                if (row.recurrence === 'weekly') {
+                    let days = [];
+                    try { const wd = row.weekdays ? JSON.parse(row.weekdays||'[]') : []; if (Array.isArray(wd)) days = wd; } catch(e){}
+                    if (!days.length && (row.day_of_week!==null && row.day_of_week!==undefined && row.day_of_week!=='')) days = [row.day_of_week];
+                    const labels = Array.isArray(days) ? days.map(d=>weekdayLabel(parseInt(d,10))).filter(Boolean).join(', ') : '';
+                    timing = `${labels} ${row.start_time||''}`;
+                }
                 else if (row.recurrence === 'monthly') timing = `Day ${row.day_of_month||''} ${row.start_time||''}`;
                 else timing = `${row.start_time||''}${row.end_time?(' - '+row.end_time):''}`;
                 tr.innerHTML = `
@@ -249,7 +255,12 @@
             setVal('#scheduleEndTimeWeekly', ntEnd);
             setVal('#scheduleStartTimeMonthly', ntStart);
             setVal('#scheduleEndTimeMonthly', ntEnd);
-            setVal('#scheduleDayOfWeek', d.day_of_week);
+            // Set multiple weekdays from JSON or fallback to single day_of_week
+            try {
+                const wd = d.weekdays ? JSON.parse(d.weekdays||'[]') : [];
+                const arr = Array.isArray(wd) && wd.length ? wd.map(v=>parseInt(v,10)) : (d.day_of_week!==null && d.day_of_week!==undefined ? [parseInt(d.day_of_week,10)] : []);
+                arr.forEach(v=>{ const cb=document.getElementById(`wd_${v}`); if(cb) cb.checked=true; });
+            } catch(e){}
             setVal('#scheduleDayOfMonth', d.day_of_month);
             setVal('#scheduleNotes', d.notes);
             setVal('#scheduleStatus', d.status);
@@ -324,6 +335,13 @@
         formData.delete('faculty_ids[]');
         const facultyCheckboxes = document.querySelectorAll('input[name="faculty_ids[]"]:checked');
         facultyCheckboxes.forEach(cb => formData.append('faculty_ids[]', cb.value));
+
+        // Collect selected weekdays for weekly recurrence
+        formData.delete('weekdays[]');
+        const weekdayCheckboxes = document.querySelectorAll('#scheduleWeekdays input[name="weekdays[]"]:checked');
+        weekdayCheckboxes.forEach(cb => formData.append('weekdays[]', cb.value));
+        // Remove single day_of_week (deprecated)
+        formData.delete('day_of_week');
         
         const id = formData.get('id');
         const action = id ? 'update' : 'create';

@@ -614,6 +614,25 @@ if ($schedRes) {
         </div>
     </div>
 
+    <!-- Upcoming Sessions -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header bg-white d-flex justify-content-between align-items-center">
+                    <h6 class="mb-0"><i class="fas fa-video me-2"></i>Upcoming Sessions</h6>
+                    <button class="btn btn-sm btn-primary" onclick="loadUpcomingSessions()">
+                        <i class="fas fa-sync me-1"></i>Refresh
+                    </button>
+                </div>
+                <div class="card-body">
+                    <div id="upcomingSessionsContainer" style="min-height: 200px;">
+                        <p class="text-muted text-center py-4"><i class="fas fa-spinner fa-spin me-2"></i>Loading sessions...</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
     <!-- Recent Leaves -->
     <div class="row mt-4">
         <div class="col-12">
@@ -671,9 +690,28 @@ if ($schedRes) {
 .schedule-pill { display: block; font-size: 0.8rem; margin-top: 6px; padding: 4px 6px; border-radius: 4px; background: #e9f2ff; color: #0d47a1; }
 .hover-lift { transition: transform 0.2s ease, box-shadow 0.2s ease; }
 .hover-lift:hover { transform: translateY(-4px); box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15) !important; }
+
+/* Upcoming sessions cards */
+.session-card { border: 1px solid #e9ecef; border-radius: 10px; padding: 12px; background: #fff; }
+.session-card .title { font-weight: 600; }
+.session-card .meta { font-size: 0.8rem; color: #6c757d; }
+.session-card .badge-time { background: #e9f2ff; color: #0d47a1; }
+.session-card .badge-date { background: #f6f9ff; color: #0d6efd; }
+.session-card .actions { display: flex; gap: 8px; }
+.section-title { font-weight: 600; font-size: 0.95rem; color: #343a40; }
+.divider { border: 0; border-top: 1px solid #e9ecef; margin: 1rem 0; }
+
+/* Modal styles */
+.attachment-list { list-style: none; padding-left: 0; margin: 0; }
+.attachment-list li { display: flex; align-items: center; justify-content: space-between; padding: 6px 8px; border: 1px dashed #dee2e6; border-radius: 6px; margin-bottom: 6px; background: #f8f9fa; }
+.note-hint { font-size: 0.75rem; color: #6c757d; }
 </style>
 
 <script>
+// Current user context for session completion (avoid const to prevent re-declare on AJAX nav)
+window.CURRENT_USER_ID = window.CURRENT_USER_ID || <?= (int)($userId ?? 0) ?>;
+window.CURRENT_USER_ROLE = window.CURRENT_USER_ROLE || '<?= htmlspecialchars($userRole) ?>';
+
 // Store batch data globally for modal
 window.batchData = <?= json_encode($allSchedules) ?>;
 window.studentCache = <?= json_encode($batchStudents) ?>;
@@ -1295,5 +1333,504 @@ function loadAttendanceReport() {
 
 function exportAttendanceReport() {
     alert('Export functionality will be implemented soon!');
+}
+
+// Load Upcoming Sessions
+async function loadUpcomingSessions() {
+    const container = document.getElementById('upcomingSessionsContainer');
+    try {
+        const res = await CRUD.get('api/session_completion.php?action=occurrences&scope=upcoming');
+        if (!res.success || !Array.isArray(res.data)) {
+            container.innerHTML = '<p class="text-muted text-center py-4">No upcoming sessions</p>';
+            return;
+        }
+
+        const sessions = res.data;
+        if (sessions.length === 0) {
+            container.innerHTML = '<p class="text-muted text-center py-4"><i class="fas fa-inbox me-2"></i>No upcoming sessions scheduled</p>';
+            return;
+        }
+        const todayStr = new Date().toISOString().slice(0,10);
+        const todaySessions = sessions.filter(s => s.session_date === todayStr);
+        const futureSessions = sessions.filter(s => s.session_date > todayStr);
+
+        function renderCards(list){
+            if (list.length === 0) return '<p class="text-muted">No sessions</p>';
+            let html = '<div class="row g-2">';
+            list.forEach(session => {
+                const date = new Date(session.session_date);
+                const formattedDate = date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+                const payload = encodeURIComponent(JSON.stringify(session));
+                const statusClass = session.latest_status === 'completed' ? 'bg-success' : 'bg-warning text-dark';
+                const statusText = (session.latest_status || 'Pending').toUpperCase();
+                const completionCount = session.completion_count || 0;
+                html += `
+                <div class="col-md-6">
+                  <div class="session-card hover-lift">
+                    <div class="d-flex justify-content-between align-items-center mb-1">
+                      <span class="badge badge-date">${formattedDate}</span>
+                      <span class="badge ${statusClass}">${statusText}</span>
+                    </div>
+                    <div class="title">${session.batch_title || 'Session'}</div>
+                    <div class="meta"><i class="far fa-clock me-1"></i>${session.start_time} - ${session.end_time}</div>
+                    ${completionCount > 0 ? `<div class="meta"><i class="fas fa-check-circle me-1" style="color: #28a745;"></i>${completionCount} completion(s)</div>` : ''}
+                    <div class="actions mt-2">
+                      <button class="btn btn-sm btn-outline-primary" onclick='openSessionDetails(decodeURIComponent("${payload}"))'><i class="fas fa-edit me-1"></i>Add Details</button>
+                      ${completionCount > 0 ? `<button class="btn btn-sm btn-outline-info" onclick='openSessionView(${session.occurrence_id})'><i class="fas fa-eye me-1"></i>View</button>` : ''}
+                    </div>
+                  </div>
+                </div>`;
+            });
+            html += '</div>';
+            return html;
+        }
+
+        let html = '';
+        html += '<div class="section-title">Today</div>' + renderCards(todaySessions);
+        html += '<div class="divider"></div>';
+        html += '<div class="section-title">Upcoming</div>' + renderCards(futureSessions);
+        container.innerHTML = html;
+    } catch(err) {
+        console.error('Failed to load sessions', err);
+        container.innerHTML = '<p class="text-danger text-center py-4">Failed to load sessions</p>';
+    }
+}
+
+// Auto-load on page init
+document.addEventListener('DOMContentLoaded', function() {
+    loadUpcomingSessions();
+    resetNotesFields();
+});
+</script>
+
+<!-- Session Details Modal -->
+<div class="modal fade" id="sessionDetailsModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title">Add Session Details</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div class="mb-2 small text-muted">
+            <div><strong>Batch:</strong> <span id="sdBatch"></span></div>
+            <div><strong>Date:</strong> <span id="sdDate"></span></div>
+            <div><strong>Time:</strong> <span id="sdTime"></span></div>
+        </div>
+        <form id="sessionCompletionForm" onsubmit="submitSessionCompletion(event)">
+            <input type="hidden" name="occurrence_id" />
+            <input type="hidden" name="schedule_id" />
+            <input type="hidden" name="batch_id" />
+                        <div class="mb-3">
+                                <label class="form-label">Status</label>
+                                <select class="form-select" name="status">
+                                        <option value="completed" selected>Completed</option>
+                                        <option value="pending">Pending</option>
+                                        <option value="cancelled">Cancelled</option>
+                                </select>
+                        </div>
+            <div class="mb-3">
+                <label class="form-label">Actual Start Time</label>
+                <input type="time" class="form-control" name="actual_start_time" />
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Actual End Time</label>
+                <input type="time" class="form-control" name="actual_end_time" />
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Completion Code</label>
+                <input type="text" class="form-control" name="completion_code" placeholder="Enter code" />
+            </div>
+            <div class="mb-3">
+                <label class="form-label">Notes</label>
+                <div id="notesContainer"></div>
+                <div class="d-flex gap-2 mt-2">
+                    <button type="button" class="btn btn-sm btn-outline-primary" onclick="addNoteField()"><i class="fas fa-plus me-1"></i>Add another note</button>
+                    <div class="note-hint">Notes are saved exactly as entered (HTML/code allowed). Add multiple using the button.</div>
+                </div>
+            </div>
+                        <div class="mb-3">
+                                <label class="form-label">Attachments</label>
+                                <div class="d-flex align-items-center gap-2">
+                                        <input type="file" class="form-control" id="sessionAttachments" multiple accept="application/pdf,video/*,audio/*,image/*,.doc,.docx,.xls,.xlsx" />
+                                        <button type="button" class="btn btn-outline-secondary btn-sm" onclick="clearAttachmentSelection()"><i class="fas fa-times me-1"></i>Clear</button>
+                                </div>
+                                <ul class="attachment-list mt-2" id="attachmentPreview"></ul>
+                        </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-primary" onclick="submitSessionCompletion()">Save Details</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Session View Modal - Timeline of all completions -->
+<div class="modal fade" id="sessionViewModal" tabindex="-1" aria-hidden="true">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+      <div class="modal-header bg-light">
+        <h5 class="modal-title">
+          <i class="fas fa-file-alt me-2"></i>Session Details
+        </h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div class="mb-3 pb-2" style="border-bottom: 1px solid #e9ecef;">
+            <div class="row g-2">
+                <div class="col-sm-6">
+                    <div><strong class="text-muted">Batch</strong></div>
+                    <div id="svBatch" class="fs-6"></div>
+                </div>
+                <div class="col-sm-6">
+                    <div><strong class="text-muted">Date & Time</strong></div>
+                    <div id="svDateTime" class="fs-6"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Completions Timeline -->
+        <div id="completionsTimeline">
+            <p class="text-muted text-center py-4"><i class="fas fa-spinner fa-spin me-2"></i>Loading...</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+function openSessionDetails(session) {
+    try { if (typeof session === 'string') session = JSON.parse(session); } catch(e) {}
+    const modalEl = document.getElementById('sessionDetailsModal');
+    const formEl = document.getElementById('sessionCompletionForm');
+    if (!modalEl || !formEl) return;
+
+    document.getElementById('sdBatch').textContent = session.batch_title || 'Session';
+    document.getElementById('sdDate').textContent = session.session_date;
+    document.getElementById('sdTime').textContent = `${session.start_time} - ${session.end_time}`;
+
+    formEl.occurrence_id.value = session.occurrence_id;
+    formEl.schedule_id.value = session.schedule_id;
+    formEl.batch_id.value = session.batch_id;
+
+    // Reset status, notes, attachments
+    formEl.status.value = 'completed';
+    resetNotesFields();
+    window.pendingSessionFiles = [];
+    document.getElementById('attachmentPreview').innerHTML = '';
+    const fileInput = document.getElementById('sessionAttachments');
+    fileInput.value = '';
+    fileInput.onchange = () => handleAttachmentSelection(fileInput.files);
+    
+    // Auto-generate completion code: SESSION-YYYYMMDD-HHMM-RANDOM
+    const now = new Date();
+    const year = now.getFullYear();
+    const month = String(now.getMonth() + 1).padStart(2, '0');
+    const day = String(now.getDate()).padStart(2, '0');
+    const hours = String(now.getHours()).padStart(2, '0');
+    const mins = String(now.getMinutes()).padStart(2, '0');
+    const random = Math.random().toString(36).substring(2, 7).toUpperCase();
+    const autoCode = `SESSION-${year}${month}${day}-${hours}${mins}-${random}`;
+    formEl.completion_code.value = autoCode;
+
+    bootstrap.Modal.getOrCreateInstance(modalEl).show();
+}
+
+async function submitSessionCompletion(evt) {
+    evt?.preventDefault?.();
+    const formEl = document.getElementById('sessionCompletionForm');
+    const occurrenceId = parseInt(formEl.occurrence_id.value || 0);
+    const scheduleId = parseInt(formEl.schedule_id.value || 0);
+    const batchId = parseInt(formEl.batch_id.value || 0);
+    const actualStart = formEl.actual_start_time.value || null;
+    const actualEnd = formEl.actual_end_time.value || null;
+    const code = formEl.completion_code.value || '';
+    const noteValues = Array.from(formEl.querySelectorAll('textarea[name="notes[]"]')).map(t => (t.value || '').trim()).filter(Boolean);
+    const notes = noteValues.join('\n\n');
+    const status = formEl.status.value || 'completed';
+
+    if (!occurrenceId || !scheduleId || !batchId) {
+        alert('Missing session identifiers');
+        return;
+    }
+
+    const data = new FormData();
+    data.append('occurrence_id', occurrenceId);
+    data.append('schedule_id', scheduleId);
+    data.append('batch_id', batchId);
+    data.append('completed_by', CURRENT_USER_ID);
+    if (CURRENT_USER_ROLE === 'faculty') data.append('faculty_id', CURRENT_USER_ID);
+    else data.append('employee_id', CURRENT_USER_ID);
+    if (actualStart) data.append('actual_start_time', actualStart);
+    if (actualEnd) data.append('actual_end_time', actualEnd);
+    if (code) data.append('completion_code', code);
+    if (notes) data.append('notes', notes);
+    data.append('status', status);
+    data.append('csrf_token', '<?= $_SESSION['csrf_token'] ?? '' ?>');
+
+    try {
+        let res = await fetch('api/session_completion.php?action=create', { method: 'POST', body: data });
+        let json = await res.json();
+        if (!json.success || !json.data || !json.data.id) {
+            alert('Failed to save session details');
+            return;
+        }
+        const completionId = json.data.id;
+
+        // Update status if needed
+        if (status === 'completed') {
+            const compForm = new FormData();
+            compForm.append('id', completionId);
+            compForm.append('actual_start_time', actualStart || '');
+            compForm.append('actual_end_time', actualEnd || '');
+            compForm.append('completion_code', code || '');
+            compForm.append('notes', notes || '');
+            compForm.append('csrf_token', '<?= $_SESSION['csrf_token'] ?? '' ?>');
+            res = await fetch('api/session_completion.php?action=complete', { method: 'POST', body: compForm });
+            json = await res.json();
+            if (!json.success) {
+                alert('Failed to mark completed');
+            }
+        } else if (status === 'cancelled') {
+            const cancelForm = new FormData();
+            cancelForm.append('id', completionId);
+            cancelForm.append('csrf_token', '<?= $_SESSION['csrf_token'] ?? '' ?>');
+            res = await fetch('api/session_completion.php?action=cancel', { method: 'POST', body: cancelForm });
+            json = await res.json();
+            if (!json.success) {
+                alert('Failed to cancel session');
+            }
+        }
+
+        // Upload attachments (multiple)
+        await uploadSelectedAttachments(completionId);
+
+        // Persist each note as its own entry (no auto line splitting)
+        if (noteValues.length > 0) {
+            for (const noteText of noteValues) {
+                const nf = new FormData();
+                nf.append('completion_id', completionId);
+                nf.append('note_text', noteText);
+                nf.append('note_type', 'general');
+                nf.append('csrf_token', '<?= $_SESSION['csrf_token'] ?? '' ?>');
+                try { await fetch('api/session_completion.php?action=add_note', { method: 'POST', body: nf }); } catch(e) {}
+            }
+        }
+
+        bootstrap.Modal.getOrCreateInstance(document.getElementById('sessionDetailsModal')).hide();
+        loadUpcomingSessions();
+    } catch(e) {
+        console.error(e);
+        alert('Request failed');
+    }
+}
+
+function handleAttachmentSelection(fileList) {
+    window.pendingSessionFiles = Array.from(fileList || []);
+    const preview = document.getElementById('attachmentPreview');
+    preview.innerHTML = '';
+    window.pendingSessionFiles.forEach((f, idx) => {
+        const li = document.createElement('li');
+        li.innerHTML = `<span><i class="far fa-file me-2"></i>${f.name} <small class="text-muted">(${Math.round(f.size/1024)} KB)</small></span>`;
+        preview.appendChild(li);
+    });
+}
+
+function clearAttachmentSelection() {
+    window.pendingSessionFiles = [];
+    document.getElementById('attachmentPreview').innerHTML = '';
+    document.getElementById('sessionAttachments').value = '';
+}
+
+// Notes helpers (multi-note support without auto line splitting)
+function addNoteField(initialValue = '') {
+    const container = document.getElementById('notesContainer');
+    if (!container) return;
+    const idx = container.children.length + 1;
+    const wrapper = document.createElement('div');
+    wrapper.className = 'note-block mb-2';
+    wrapper.innerHTML = `
+        <div class="d-flex justify-content-between align-items-center mb-1">
+            <span class="badge bg-light text-dark">Note ${idx}</span>
+            <button type="button" class="btn btn-sm btn-link text-danger" onclick="removeNoteField(this)"><i class="fas fa-times"></i></button>
+        </div>
+        <textarea class="form-control note-input" name="notes[]" rows="3" placeholder="Add note..."></textarea>
+    `;
+    container.appendChild(wrapper);
+    renumberNoteBadges();
+    if (initialValue) {
+        const ta = wrapper.querySelector('textarea');
+        if (ta) ta.value = initialValue;
+    }
+}
+
+function removeNoteField(btn) {
+    const wrapper = btn.closest('.note-block');
+    if (wrapper && wrapper.parentNode) {
+        wrapper.parentNode.removeChild(wrapper);
+        renumberNoteBadges();
+    }
+    // Always keep at least one note field
+    const container = document.getElementById('notesContainer');
+    if (container && container.children.length === 0) {
+        addNoteField();
+    }
+}
+
+function renumberNoteBadges() {
+    const container = document.getElementById('notesContainer');
+    if (!container) return;
+    Array.from(container.children).forEach((child, idx) => {
+        const badge = child.querySelector('.badge');
+        if (badge) badge.textContent = `Note ${idx + 1}`;
+    });
+}
+
+function resetNotesFields() {
+    const container = document.getElementById('notesContainer');
+    if (!container) return;
+    container.innerHTML = '';
+    addNoteField();
+}
+
+async function uploadSelectedAttachments(completionId) {
+    const files = window.pendingSessionFiles || [];
+    for (const f of files) {
+        const form = new FormData();
+        form.append('completion_id', completionId);
+        form.append('description', f.name);
+        form.append('file', f);
+        form.append('csrf_token', '<?= $_SESSION['csrf_token'] ?? '' ?>');
+        try {
+            const res = await fetch('api/session_completion.php?action=upload_attachment', { method: 'POST', body: form });
+            const json = await res.json();
+            if (!json.success) {
+                console.warn('Attachment upload failed:', f.name);
+            }
+        } catch(e) {
+            console.error('Upload error:', e);
+        }
+    }
+}
+
+// View Session - Timeline of all completions
+async function openSessionView(occurrenceId) {
+    const modalEl = document.getElementById('sessionViewModal');
+    if (!modalEl) return;
+
+    // Fetch all completions for this occurrence
+    try {
+        const res = await fetch(`api/session_completion.php?action=get_by_occurrence&occurrence_id=${occurrenceId}`);
+        const json = await res.json();
+        
+        if (!json.success || !Array.isArray(json.data)) {
+            document.getElementById('completionsTimeline').innerHTML = '<p class="text-danger">Failed to load session details</p>';
+            bootstrap.Modal.getOrCreateInstance(modalEl).show();
+            return;
+        }
+
+        const completions = json.data;
+        if (completions.length === 0) {
+            document.getElementById('completionsTimeline').innerHTML = '<p class="text-muted">No completions recorded</p>';
+            bootstrap.Modal.getOrCreateInstance(modalEl).show();
+            return;
+        }
+
+        // Set header info from first completion
+        const first = completions[0];
+        document.getElementById('svBatch').textContent = first.batch_title || 'Session';
+        const dateStr = first.session_date || '';
+        const timeStr = `${first.scheduled_start || '--:--'} to ${first.scheduled_end || '--:--'}`;
+        document.getElementById('svDateTime').innerHTML = `<div>${dateStr}</div><div class="small text-muted">${timeStr}</div>`;
+
+        // Build timeline
+        let timelineHtml = '<div style="position: relative; padding-left: 30px;">';
+        completions.forEach((comp, idx) => {
+            const statusClass = comp.status === 'completed' ? 'bg-success' : 
+                               comp.status === 'cancelled' ? 'bg-danger' : 'bg-warning text-dark';
+            const statusText = (comp.status || 'pending').toUpperCase();
+            const created = new Date(comp.created_at).toLocaleString();
+            const user = comp.completed_by_name || comp.faculty_name || comp.employee_name || 'Unknown';
+            
+            timelineHtml += `
+            <div style="margin-bottom: 20px; position: relative;">
+              <!-- Timeline dot -->
+              <div style="position: absolute; left: -30px; width: 16px; height: 16px; border-radius: 50%; background: #0d6efd; top: 2px;"></div>
+              
+              <!-- Card -->
+              <div class="card border-light shadow-sm">
+                <div class="card-header bg-light d-flex justify-content-between align-items-center">
+                  <div>
+                    <span class="badge ${statusClass} me-2">${statusText}</span>
+                    <small class="text-muted">by ${escapeHtml(user)} on ${created}</small>
+                  </div>
+                </div>
+                <div class="card-body">
+                  <div class="row g-2 mb-3">
+                    ${comp.actual_start_time ? `<div class="col-sm-6"><strong class="text-muted">Start:</strong> ${comp.actual_start_time}</div>` : ''}
+                    ${comp.actual_end_time ? `<div class="col-sm-6"><strong class="text-muted">End:</strong> ${comp.actual_end_time}</div>` : ''}
+                  </div>
+                  ${comp.completion_code ? `<div class="mb-2"><strong class="text-muted">Code:</strong> <code>${escapeHtml(comp.completion_code)}</code></div>` : ''}
+                  
+                  <!-- Comments from session_notes -->
+                  ${comp.comments && Array.isArray(comp.comments) && comp.comments.length > 0 ? `
+                    <div class="mt-2">
+                      <strong class="text-muted d-block mb-1">Comments (${comp.comments.length}):</strong>
+                      <div style="padding: 8px; background: #f0f7ff; border-left: 3px solid #0d6efd; border-radius: 4px; max-height: 200px; overflow-y: auto;">
+                        ${comp.comments.map(note => `
+                          <div class="mb-1" style="padding-bottom: 6px; border-bottom: 1px solid #e0e7ff;">
+                            <small class="text-muted"><i class="far fa-clock me-1"></i>${new Date(note.created_at).toLocaleString()}</small>
+                            <div style="margin-top: 2px;">${escapeHtml(note.note_text)}</div>
+                          </div>
+                        `).join('')}
+                      </div>
+                    </div>
+                  ` : ''}
+                  
+                  <!-- Attachments -->
+                  ${comp.attachments && Array.isArray(comp.attachments) && comp.attachments.length > 0 ? `
+                    <div class="mt-2">
+                      <strong class="text-muted d-block mb-1">Attachments:</strong>
+                      <div class="d-flex flex-wrap gap-2">
+                        ${comp.attachments.map(att => {
+                            const isVideo = att.file_type?.includes('video');
+                            const isAudio = att.file_type?.includes('audio');
+                            const isImage = att.file_type?.includes('image');
+                            const icon = isVideo ? 'fa-video' : isAudio ? 'fa-volume-up' : isImage ? 'fa-image' : 'fa-file';
+                            return `
+                            <a href="${att.file_path}" target="_blank" class="btn btn-sm btn-outline-primary">
+                              <i class="fas ${icon} me-1"></i>${att.file_name}
+                            </a>`;
+                        }).join('')}
+                      </div>
+                    </div>
+                  ` : ''}
+                </div>
+              </div>
+            </div>`;
+        });
+        
+        timelineHtml += '</div>';
+        document.getElementById('completionsTimeline').innerHTML = timelineHtml;
+        bootstrap.Modal.getOrCreateInstance(modalEl).show();
+        
+    } catch(e) {
+        console.error('Error loading session view:', e);
+        document.getElementById('completionsTimeline').innerHTML = '<p class="text-danger">Error loading session details</p>';
+        bootstrap.Modal.getOrCreateInstance(modalEl).show();
+    }
+}
+
+function escapeHtml(text) {
+    const map = {
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#039;'
+    };
+    return String(text || '').replace(/[&<>"']/g, m => map[m]);
 }
 </script>

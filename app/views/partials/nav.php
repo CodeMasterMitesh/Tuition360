@@ -66,6 +66,12 @@ $navSections = [
         'roles' => ['super_admin', 'branch_admin', 'faculty', 'employee'],
     ],
     [
+        'label' => 'Sessions',
+        'icon' => 'fa-video',
+        'page' => 'session_tracking',
+        'roles' => ['super_admin', 'branch_admin', 'faculty', 'employee'],
+    ],
+    [
         'label' => 'Finance',
         'icon' => 'fa-money-check-dollar',
         'roles' => ['super_admin', 'branch_admin'],

@@ -123,7 +123,7 @@ try {
 }
 
 function normalize_nested(&$data) {
-    foreach (['subject_ids','student_ids'] as $k) {
+    foreach (['subject_ids','student_ids','weekdays'] as $k) {
         if (isset($data[$k])) {
             if (is_string($data[$k])) {
                 $dec = json_decode($data[$k], true);
