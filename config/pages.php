@@ -114,6 +114,11 @@ return [
         'title' => 'Leaves',
         'roles' => $roles['all'],
     ],
+    'session_tracking' => [
+        'view' => __DIR__ . '/../app/views/session_tracking.php',
+        'title' => 'Session Tracking',
+        'roles' => $roles['all'],
+    ],
     'settings' => [
         'view' => __DIR__ . '/../app/views/settings.php',
         'title' => 'Settings',
